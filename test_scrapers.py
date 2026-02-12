@@ -3,8 +3,9 @@ import sys
 import importlib.util
 from pathlib import Path
 
-# Add parent to path for log_utils
+# Add parent to path for log_utils, and scrapers dir for base module
 sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent / "scrapers"))
 from log_utils import log_site, show_progress
 
 SCRAPERS_DIR = Path(__file__).parent / "scrapers"
@@ -58,6 +59,9 @@ SCRAPER_INFO = {
     "scrape_embl.py": ("European Molecular Biology Laboratory [EMBL]", "https://embl.wd103.myworkdayjobs.com/EMBL"),
     "scrape_unhcr.py": ("UNHCR", "https://unhcr.wd3.myworkdayjobs.com/External"),
     "scrape_globalfund.py": ("The Global Fund", "https://theglobalfund.wd1.myworkdayjobs.com/External"),
+    # EU institution scrapers
+    "scrape_eu_careers.py": ("EU Careers", "https://eu-careers.europa.eu/en/non-permanent-contract-ec"),
+    "scrape_vacancies.py": ("Anti-Money Laundering Authority [AMLA]", "https://www.amla.europa.eu/careers/vacancies_en"),
 }
 
 
