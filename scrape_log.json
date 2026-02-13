@@ -1,373 +1,13 @@
 {
-  "last_updated": "2026-02-12T18:15:54.291336",
+  "last_updated": "2026-02-13T11:24:58.849666",
   "summary": {
-    "total": 74,
-    "success": 64,
+    "total": 88,
+    "success": 83,
     "partial": 0,
-    "failed": 10,
+    "failed": 5,
     "skipped": 0
   },
   "sites": [
-    {
-      "name": "Agency for the Cooperation of Energy Regulators [ACER]",
-      "url": "https://www.acer.europa.eu/the-agency/careers/vacancies",
-      "status": "success",
-      "script_file": "scrapers/scrape_acer.py",
-      "vacancies_found": 3,
-      "has_pagination": false,
-      "notes": "Found 3 jobs",
-      "timestamp": "2026-02-12T18:13:39.894226"
-    },
-    {
-      "name": "Body of European Regulators for Electronic Communications [BEREC]",
-      "url": "https://www.berec.europa.eu/en/vacancies",
-      "status": "success",
-      "script_file": "scrapers/scrape_berec.py",
-      "vacancies_found": 2,
-      "has_pagination": false,
-      "notes": "Found 2 jobs",
-      "timestamp": "2026-02-12T18:13:40.304747"
-    },
-    {
-      "name": "Committee of Regions [CR]",
-      "url": "https://cor.europa.eu/en/about/work-us/jobs",
-      "status": "success",
-      "script_file": "scrapers/scrape_cor.py",
-      "vacancies_found": 4,
-      "has_pagination": false,
-      "notes": "Found 4 jobs",
-      "timestamp": "2026-02-12T18:13:40.446094"
-    },
-    {
-      "name": "European Agency for the Management of Operational Cooperation at the External Borders [FRONTEX]",
-      "url": "https://www.frontex.europa.eu/careers/vacancies/open-vacancies/",
-      "status": "success",
-      "script_file": "scrapers/scrape_frontex.py",
-      "vacancies_found": 2,
-      "has_pagination": false,
-      "notes": "Found 2 jobs",
-      "timestamp": "2026-02-12T18:13:40.568207"
-    },
-    {
-      "name": "European Asylum Support Office [EASO]",
-      "url": "https://euaa.europa.eu/careers/vacancies",
-      "status": "success",
-      "script_file": "scrapers/scrape_euaa.py",
-      "vacancies_found": 8,
-      "has_pagination": false,
-      "notes": "Found 8 jobs",
-      "timestamp": "2026-02-12T18:13:40.964904"
-    },
-    {
-      "name": "European Centre for the Development of Vocational Training [CEDEFOP]",
-      "url": "https://www.cedefop.europa.eu/en/about-cedefop/job-opportunities/vacancies",
-      "status": "success",
-      "script_file": "scrapers/scrape_cedefop.py",
-      "vacancies_found": 10,
-      "has_pagination": false,
-      "notes": "Found 10 jobs",
-      "timestamp": "2026-02-12T18:13:41.161713"
-    },
-    {
-      "name": "European Defence Agency [EDA]",
-      "url": "https://eda.europa.eu/careers/current-vacancies",
-      "status": "success",
-      "script_file": "scrapers/scrape_eda.py",
-      "vacancies_found": 7,
-      "has_pagination": false,
-      "notes": "Found 7 jobs",
-      "timestamp": "2026-02-12T18:13:42.339940"
-    },
-    {
-      "name": "European Maritime Safety Agency [EMSA]",
-      "url": "https://www.emsa.europa.eu/jobs/vacancies.html",
-      "status": "success",
-      "script_file": "scrapers/scrape_emsa.py",
-      "vacancies_found": 3,
-      "has_pagination": false,
-      "notes": "Found 3 jobs",
-      "timestamp": "2026-02-12T18:13:42.895462"
-    },
-    {
-      "name": "European Network and Information Security Agency [ENISA]",
-      "url": "https://www.enisa.europa.eu/careers",
-      "status": "success",
-      "script_file": "scrapers/scrape_enisa.py",
-      "vacancies_found": 132,
-      "has_pagination": false,
-      "notes": "Found 132 jobs",
-      "timestamp": "2026-02-12T18:13:51.443471"
-    },
-    {
-      "name": "European Ombudsman [Ombudsman]",
-      "url": "https://www.ombudsman.europa.eu/en/office/careers",
-      "status": "success",
-      "script_file": "scrapers/scrape_ombudsman.py",
-      "vacancies_found": 9,
-      "has_pagination": false,
-      "notes": "Found 9 jobs",
-      "timestamp": "2026-02-12T18:13:56.846448"
-    },
-    {
-      "name": "Single Resolution Board [SRB]",
-      "url": "https://www.srb.europa.eu/en/vacancies",
-      "status": "success",
-      "script_file": "scrapers/scrape_srb.py",
-      "vacancies_found": 8,
-      "has_pagination": false,
-      "notes": "Found 8 jobs",
-      "timestamp": "2026-02-12T18:13:56.989991"
-    },
-    {
-      "name": "European Police Office [EUROPOL]",
-      "url": "https://www.europol.europa.eu/careers-procurement/open-vacancies",
-      "status": "success",
-      "script_file": "scrapers/scrape_europol.py",
-      "vacancies_found": 10,
-      "has_pagination": false,
-      "notes": "Found 10 jobs",
-      "timestamp": "2026-02-12T18:13:57.153423"
-    },
-    {
-      "name": "European Parliament [EP]",
-      "url": "https://apply4ep.gestmax.eu/search/index/lang/en_US",
-      "status": "success",
-      "script_file": "scrapers/scrape_ep.py",
-      "vacancies_found": 1,
-      "has_pagination": false,
-      "notes": "Found 1 jobs",
-      "timestamp": "2026-02-12T18:13:58.063949"
-    },
-    {
-      "name": "Community Plant Variety Office [CPVO]",
-      "url": "https://cpvo.europa.eu/en/about-us/recruitment#page-search---index",
-      "status": "success",
-      "script_file": "scrapers/scrape_cpvo.py",
-      "vacancies_found": 7,
-      "has_pagination": false,
-      "notes": "Found 7 jobs",
-      "timestamp": "2026-02-12T18:13:58.343229"
-    },
-    {
-      "name": "European Agency for Safety and Health at Work [EU-OSHA]",
-      "url": "https://osha.europa.eu/en/careers",
-      "status": "success",
-      "script_file": "scrapers/scrape_eu_osha.py",
-      "vacancies_found": 7,
-      "has_pagination": false,
-      "notes": "Found 7 jobs",
-      "timestamp": "2026-02-12T18:13:58.622288"
-    },
-    {
-      "name": "European External Action Service [EEAS]",
-      "url": "https://www.eeas.europa.eu/eeas/vacancies_en?f%5B0%5D=vacancy_site%3AEEAS",
-      "status": "success",
-      "script_file": "scrapers/scrape_eeas.py",
-      "vacancies_found": 792,
-      "has_pagination": false,
-      "notes": "Found 792 jobs",
-      "timestamp": "2026-02-12T18:14:44.168508"
-    },
-    {
-      "name": "European Foundation for the Improvement of Living and Working Conditions [EUROFOUND]",
-      "url": "https://www.eurofound.europa.eu/en/vacancies",
-      "status": "failed",
-      "script_file": null,
-      "vacancies_found": null,
-      "has_pagination": false,
-      "notes": "No jobs found (may be empty or scraper issue)",
-      "timestamp": "2026-02-12T18:14:44.441704"
-    },
-    {
-      "name": "European GNSS Agency [GSA]",
-      "url": "https://www.euspa.europa.eu/opportunities/careers",
-      "status": "success",
-      "script_file": "scrapers/scrape_euspa.py",
-      "vacancies_found": 3,
-      "has_pagination": false,
-      "notes": "Found 3 jobs",
-      "timestamp": "2026-02-12T18:14:45.318069"
-    },
-    {
-      "name": "European Institute for Gender Equality [EIGE]",
-      "url": "https://eige.europa.eu/about/recruitment",
-      "status": "success",
-      "script_file": "scrapers/scrape_eige.py",
-      "vacancies_found": 5,
-      "has_pagination": false,
-      "notes": "Found 5 jobs",
-      "timestamp": "2026-02-12T18:14:48.592889"
-    },
-    {
-      "name": "European Institute of Innovation and Technology [EIT]",
-      "url": "https://www.eit.europa.eu/work-with-us/careers/vacancies/open",
-      "status": "success",
-      "script_file": "scrapers/scrape_eit.py",
-      "vacancies_found": 7,
-      "has_pagination": false,
-      "notes": "Found 7 jobs",
-      "timestamp": "2026-02-12T18:14:48.715013"
-    },
-    {
-      "name": "European Training Foundation [ETF]",
-      "url": "https://www.etf.europa.eu/en/about/recruitment",
-      "status": "success",
-      "script_file": "scrapers/scrape_etf.py",
-      "vacancies_found": 1,
-      "has_pagination": false,
-      "notes": "Found 1 jobs",
-      "timestamp": "2026-02-12T18:14:48.907501"
-    },
-    {
-      "name": "European Police College [CEPOL]",
-      "url": "https://www.cepol.europa.eu/work-us/careers/vacancies",
-      "status": "failed",
-      "script_file": null,
-      "vacancies_found": null,
-      "has_pagination": false,
-      "notes": "No jobs found (may be empty or scraper issue)",
-      "timestamp": "2026-02-12T18:14:49.015425"
-    },
-    {
-      "name": "European Free Trade Association [EFTA]",
-      "url": "https://www.efta.int/careers/open-vacancies",
-      "status": "failed",
-      "script_file": null,
-      "vacancies_found": null,
-      "has_pagination": false,
-      "notes": "403 Client Error: Forbidden for url: https://www.efta.int/careers/open-vacancies",
-      "timestamp": "2026-02-12T18:14:52.522297"
-    },
-    {
-      "name": "International Council for the Exploration of the Sea [ICES]",
-      "url": "https://www.ices.dk/about-ICES/Jobs-in-ICES/Pages/default.aspx",
-      "status": "success",
-      "script_file": "scrapers/scrape_ices.py",
-      "vacancies_found": 2,
-      "has_pagination": false,
-      "notes": "Found 2 jobs",
-      "timestamp": "2026-02-12T18:14:52.996954"
-    },
-    {
-      "name": "European Organization for Nuclear Research [CERN]",
-      "url": "https://careers.cern/",
-      "status": "failed",
-      "script_file": null,
-      "vacancies_found": null,
-      "has_pagination": false,
-      "notes": "No jobs found (may be empty or scraper issue)",
-      "timestamp": "2026-02-12T18:14:53.534944"
-    },
-    {
-      "name": "World Council of Churches [WCC]",
-      "url": "https://wcccoe.hire.trakstar.com/?#content",
-      "status": "success",
-      "script_file": "scrapers/scrape_wcc.py",
-      "vacancies_found": 3,
-      "has_pagination": false,
-      "notes": "Found 3 jobs",
-      "timestamp": "2026-02-12T18:14:54.305930"
-    },
-    {
-      "name": "Fusion for Energy [F4E]",
-      "url": "https://fusionforenergy.europa.eu/vacancies/",
-      "status": "success",
-      "script_file": "scrapers/scrape_f4e.py",
-      "vacancies_found": 2,
-      "has_pagination": false,
-      "notes": "Found 2 jobs",
-      "timestamp": "2026-02-12T18:15:01.701431"
-    },
-    {
-      "name": "European Union Institute for Security Studies [EUISS]",
-      "url": "https://www.iss.europa.eu/opportunities",
-      "status": "failed",
-      "script_file": null,
-      "vacancies_found": null,
-      "has_pagination": false,
-      "notes": "No jobs found (may be empty or scraper issue)",
-      "timestamp": "2026-02-12T18:15:01.891753"
-    },
-    {
-      "name": "Bank for International Settlements [BIS]",
-      "url": "https://www.bis.org/careers/vacancies.htm",
-      "status": "success",
-      "script_file": "scrapers/scrape_bis.py",
-      "vacancies_found": 1,
-      "has_pagination": false,
-      "notes": "Found 1 jobs",
-      "timestamp": "2026-02-12T18:15:02.031305"
-    },
-    {
-      "name": "European Organisation for the Exploitation of Meteorological Satellites [EUMETSAT]",
-      "url": "https://eumetsat.onlyfy.jobs/",
-      "status": "success",
-      "script_file": "scrapers/scrape_eumetsat.py",
-      "vacancies_found": 11,
-      "has_pagination": false,
-      "notes": "Found 11 jobs",
-      "timestamp": "2026-02-12T18:15:02.523538"
-    },
-    {
-      "name": "Nordic Development Fund [NDF]",
-      "url": "https://www.ndf.int/contact-us/jobs.html",
-      "status": "success",
-      "script_file": "scrapers/scrape_ndf.py",
-      "vacancies_found": 2,
-      "has_pagination": false,
-      "notes": "Found 2 jobs",
-      "timestamp": "2026-02-12T18:15:02.857503"
-    },
-    {
-      "name": "United Nations Framework Convention for Climate Change [UNFCCC]",
-      "url": "https://unfccc.int/secretariat/employment/recruitment",
-      "status": "failed",
-      "script_file": null,
-      "vacancies_found": null,
-      "has_pagination": false,
-      "notes": "No jobs found (may be empty or scraper issue)",
-      "timestamp": "2026-02-12T18:15:02.977084"
-    },
-    {
-      "name": "European Union Satellite Centre [SATCEN]",
-      "url": "https://www.satcen.europa.eu/recruitment/jobs",
-      "status": "failed",
-      "script_file": null,
-      "vacancies_found": null,
-      "has_pagination": false,
-      "notes": "No jobs found (may be empty or scraper issue)",
-      "timestamp": "2026-02-12T18:15:03.237031"
-    },
-    {
-      "name": "North Atlantic Treaty Organisation [NATO]",
-      "url": "https://www.nato.int/en/work-with-us/careers/vacancies",
-      "status": "success",
-      "script_file": "scrapers/scrape_nato.py",
-      "vacancies_found": 3,
-      "has_pagination": false,
-      "notes": "Found 3 jobs",
-      "timestamp": "2026-02-12T18:15:06.904068"
-    },
-    {
-      "name": "Council of Europe [CE]",
-      "url": "https://talents.coe.int/en_GB/careersmarketplace",
-      "status": "success",
-      "script_file": "scrapers/scrape_coe.py",
-      "vacancies_found": 7,
-      "has_pagination": false,
-      "notes": "Found 7 jobs",
-      "timestamp": "2026-02-12T18:15:14.994091"
-    },
-    {
-      "name": "European Agency for the operational management of large-scale IT systems in the area of freedom, security and justice [EU-LISA]",
-      "url": "https://erecruitment.eulisa.europa.eu/en",
-      "status": "success",
-      "script_file": "scrapers/scrape_eulisa.py",
-      "vacancies_found": 4,
-      "has_pagination": false,
-      "notes": "Found 4 jobs",
-      "timestamp": "2026-02-12T18:15:15.915209"
-    },
     {
       "name": "European Financial Stability Facility [EFSF]",
       "url": "https://www.esm.europa.eu/careers/vacancies",
@@ -379,14 +19,374 @@
       "timestamp": "2026-02-12T18:15:16.053392"
     },
     {
+      "name": "Agency for the Cooperation of Energy Regulators [ACER]",
+      "url": "https://www.acer.europa.eu/the-agency/careers/vacancies",
+      "status": "success",
+      "script_file": "scrapers/scrape_acer.py",
+      "vacancies_found": 3,
+      "has_pagination": false,
+      "notes": "Found 3 jobs",
+      "timestamp": "2026-02-13T11:16:32.993390"
+    },
+    {
+      "name": "Body of European Regulators for Electronic Communications [BEREC]",
+      "url": "https://www.berec.europa.eu/en/vacancies",
+      "status": "success",
+      "script_file": "scrapers/scrape_berec.py",
+      "vacancies_found": 2,
+      "has_pagination": false,
+      "notes": "Found 2 jobs",
+      "timestamp": "2026-02-13T11:16:33.382706"
+    },
+    {
+      "name": "Committee of Regions [CR]",
+      "url": "https://cor.europa.eu/en/about/work-us/jobs",
+      "status": "success",
+      "script_file": "scrapers/scrape_cor.py",
+      "vacancies_found": 3,
+      "has_pagination": false,
+      "notes": "Found 3 jobs",
+      "timestamp": "2026-02-13T11:16:33.590737"
+    },
+    {
+      "name": "European Agency for the Management of Operational Cooperation at the External Borders [FRONTEX]",
+      "url": "https://www.frontex.europa.eu/careers/vacancies/open-vacancies/",
+      "status": "success",
+      "script_file": "scrapers/scrape_frontex.py",
+      "vacancies_found": 2,
+      "has_pagination": false,
+      "notes": "Found 2 jobs",
+      "timestamp": "2026-02-13T11:16:33.785144"
+    },
+    {
+      "name": "European Asylum Support Office [EASO]",
+      "url": "https://euaa.europa.eu/careers/vacancies",
+      "status": "success",
+      "script_file": "scrapers/scrape_euaa.py",
+      "vacancies_found": 8,
+      "has_pagination": false,
+      "notes": "Found 8 jobs",
+      "timestamp": "2026-02-13T11:16:34.248245"
+    },
+    {
+      "name": "European Centre for the Development of Vocational Training [CEDEFOP]",
+      "url": "https://www.cedefop.europa.eu/en/about-cedefop/job-opportunities/vacancies",
+      "status": "success",
+      "script_file": "scrapers/scrape_cedefop.py",
+      "vacancies_found": 10,
+      "has_pagination": false,
+      "notes": "Found 10 jobs",
+      "timestamp": "2026-02-13T11:16:34.515290"
+    },
+    {
+      "name": "European Defence Agency [EDA]",
+      "url": "https://eda.europa.eu/careers/current-vacancies",
+      "status": "success",
+      "script_file": "scrapers/scrape_eda.py",
+      "vacancies_found": 7,
+      "has_pagination": false,
+      "notes": "Found 7 jobs",
+      "timestamp": "2026-02-13T11:16:35.628408"
+    },
+    {
+      "name": "European Maritime Safety Agency [EMSA]",
+      "url": "https://www.emsa.europa.eu/jobs/vacancies.html",
+      "status": "success",
+      "script_file": "scrapers/scrape_emsa.py",
+      "vacancies_found": 3,
+      "has_pagination": false,
+      "notes": "Found 3 jobs",
+      "timestamp": "2026-02-13T11:16:36.274375"
+    },
+    {
+      "name": "European Network and Information Security Agency [ENISA]",
+      "url": "https://www.enisa.europa.eu/careers",
+      "status": "success",
+      "script_file": "scrapers/scrape_enisa.py",
+      "vacancies_found": 132,
+      "has_pagination": false,
+      "notes": "Found 132 jobs",
+      "timestamp": "2026-02-13T11:16:47.097718"
+    },
+    {
+      "name": "European Ombudsman [Ombudsman]",
+      "url": "https://www.ombudsman.europa.eu/en/office/careers",
+      "status": "success",
+      "script_file": "scrapers/scrape_ombudsman.py",
+      "vacancies_found": 9,
+      "has_pagination": false,
+      "notes": "Found 9 jobs",
+      "timestamp": "2026-02-13T11:16:54.990148"
+    },
+    {
+      "name": "Single Resolution Board [SRB]",
+      "url": "https://www.srb.europa.eu/en/vacancies",
+      "status": "success",
+      "script_file": "scrapers/scrape_srb.py",
+      "vacancies_found": 8,
+      "has_pagination": false,
+      "notes": "Found 8 jobs",
+      "timestamp": "2026-02-13T11:16:55.203245"
+    },
+    {
+      "name": "European Police Office [EUROPOL]",
+      "url": "https://www.europol.europa.eu/careers-procurement/open-vacancies",
+      "status": "success",
+      "script_file": "scrapers/scrape_europol.py",
+      "vacancies_found": 10,
+      "has_pagination": false,
+      "notes": "Found 10 jobs",
+      "timestamp": "2026-02-13T11:16:55.329719"
+    },
+    {
+      "name": "European Parliament [EP]",
+      "url": "https://apply4ep.gestmax.eu/search/index/lang/en_US",
+      "status": "success",
+      "script_file": "scrapers/scrape_ep.py",
+      "vacancies_found": 1,
+      "has_pagination": false,
+      "notes": "Found 1 jobs",
+      "timestamp": "2026-02-13T11:16:56.252098"
+    },
+    {
+      "name": "Community Plant Variety Office [CPVO]",
+      "url": "https://cpvo.europa.eu/en/about-us/recruitment#page-search---index",
+      "status": "success",
+      "script_file": "scrapers/scrape_cpvo.py",
+      "vacancies_found": 7,
+      "has_pagination": false,
+      "notes": "Found 7 jobs",
+      "timestamp": "2026-02-13T11:16:56.622012"
+    },
+    {
+      "name": "European Agency for Safety and Health at Work [EU-OSHA]",
+      "url": "https://osha.europa.eu/en/careers",
+      "status": "success",
+      "script_file": "scrapers/scrape_eu_osha.py",
+      "vacancies_found": 7,
+      "has_pagination": false,
+      "notes": "Found 7 jobs",
+      "timestamp": "2026-02-13T11:16:56.999721"
+    },
+    {
+      "name": "European External Action Service [EEAS]",
+      "url": "https://www.eeas.europa.eu/eeas/vacancies_en?f%5B0%5D=vacancy_site%3AEEAS",
+      "status": "success",
+      "script_file": "scrapers/scrape_eeas.py",
+      "vacancies_found": 792,
+      "has_pagination": false,
+      "notes": "Found 792 jobs",
+      "timestamp": "2026-02-13T11:19:08.725113"
+    },
+    {
+      "name": "European Foundation for the Improvement of Living and Working Conditions [EUROFOUND]",
+      "url": "https://www.eurofound.europa.eu/en/vacancies",
+      "status": "failed",
+      "script_file": null,
+      "vacancies_found": null,
+      "has_pagination": false,
+      "notes": "No jobs found (may be empty or scraper issue)",
+      "timestamp": "2026-02-13T11:19:09.027294"
+    },
+    {
+      "name": "European GNSS Agency [GSA]",
+      "url": "https://www.euspa.europa.eu/opportunities/careers",
+      "status": "success",
+      "script_file": "scrapers/scrape_euspa.py",
+      "vacancies_found": 3,
+      "has_pagination": false,
+      "notes": "Found 3 jobs",
+      "timestamp": "2026-02-13T11:19:10.057183"
+    },
+    {
+      "name": "European Institute for Gender Equality [EIGE]",
+      "url": "https://eige.europa.eu/about/recruitment",
+      "status": "success",
+      "script_file": "scrapers/scrape_eige.py",
+      "vacancies_found": 6,
+      "has_pagination": false,
+      "notes": "Found 6 jobs",
+      "timestamp": "2026-02-13T11:19:12.551399"
+    },
+    {
+      "name": "European Institute of Innovation and Technology [EIT]",
+      "url": "https://www.eit.europa.eu/work-with-us/careers/vacancies/open",
+      "status": "success",
+      "script_file": "scrapers/scrape_eit.py",
+      "vacancies_found": 7,
+      "has_pagination": false,
+      "notes": "Found 7 jobs",
+      "timestamp": "2026-02-13T11:19:12.712019"
+    },
+    {
+      "name": "European Training Foundation [ETF]",
+      "url": "https://www.etf.europa.eu/en/about/working-with-us/vacancies",
+      "status": "success",
+      "script_file": "scrapers/scrape_etf.py",
+      "vacancies_found": 10,
+      "has_pagination": false,
+      "notes": "Found 10 jobs",
+      "timestamp": "2026-02-13T11:19:12.885975"
+    },
+    {
+      "name": "European Police College [CEPOL]",
+      "url": "https://www.cepol.europa.eu/work-us/careers/vacancies",
+      "status": "success",
+      "script_file": "scrapers/scrape_cepol.py",
+      "vacancies_found": 2,
+      "has_pagination": false,
+      "notes": "Found 2 jobs",
+      "timestamp": "2026-02-13T11:19:14.333736"
+    },
+    {
+      "name": "European Free Trade Association [EFTA]",
+      "url": "https://www.efta.int/careers/open-vacancies",
+      "status": "failed",
+      "script_file": null,
+      "vacancies_found": null,
+      "has_pagination": false,
+      "notes": "403 Client Error: Forbidden for url: https://www.efta.int/careers/open-vacancies",
+      "timestamp": "2026-02-13T11:19:17.832552"
+    },
+    {
+      "name": "International Council for the Exploration of the Sea [ICES]",
+      "url": "https://www.ices.dk/about-ICES/Jobs-in-ICES/Pages/default.aspx",
+      "status": "success",
+      "script_file": "scrapers/scrape_ices.py",
+      "vacancies_found": 2,
+      "has_pagination": false,
+      "notes": "Found 2 jobs",
+      "timestamp": "2026-02-13T11:19:18.459960"
+    },
+    {
+      "name": "European Organization for Nuclear Research [CERN]",
+      "url": "https://careers.cern/",
+      "status": "success",
+      "script_file": "scrapers/scrape_cern.py",
+      "vacancies_found": 61,
+      "has_pagination": false,
+      "notes": "Found 61 jobs",
+      "timestamp": "2026-02-13T11:19:20.863457"
+    },
+    {
+      "name": "World Council of Churches [WCC]",
+      "url": "https://wcccoe.hire.trakstar.com/?#content",
+      "status": "success",
+      "script_file": "scrapers/scrape_wcc.py",
+      "vacancies_found": 3,
+      "has_pagination": false,
+      "notes": "Found 3 jobs",
+      "timestamp": "2026-02-13T11:19:21.643996"
+    },
+    {
+      "name": "Fusion for Energy [F4E]",
+      "url": "https://fusionforenergy.europa.eu/vacancies/",
+      "status": "success",
+      "script_file": "scrapers/scrape_f4e.py",
+      "vacancies_found": 9,
+      "has_pagination": false,
+      "notes": "Found 9 jobs",
+      "timestamp": "2026-02-13T11:19:36.807975"
+    },
+    {
+      "name": "European Union Institute for Security Studies [EUISS]",
+      "url": "https://www.iss.europa.eu/opportunities",
+      "status": "failed",
+      "script_file": null,
+      "vacancies_found": null,
+      "has_pagination": false,
+      "notes": "No jobs found (may be empty or scraper issue)",
+      "timestamp": "2026-02-13T11:19:37.037824"
+    },
+    {
+      "name": "Bank for International Settlements [BIS]",
+      "url": "https://www.bis.org/careers/vacancies.htm",
+      "status": "success",
+      "script_file": "scrapers/scrape_bis.py",
+      "vacancies_found": 7,
+      "has_pagination": false,
+      "notes": "Found 7 jobs",
+      "timestamp": "2026-02-13T11:19:37.974032"
+    },
+    {
+      "name": "European Organisation for the Exploitation of Meteorological Satellites [EUMETSAT]",
+      "url": "https://eumetsat.onlyfy.jobs/",
+      "status": "success",
+      "script_file": "scrapers/scrape_eumetsat.py",
+      "vacancies_found": 11,
+      "has_pagination": false,
+      "notes": "Found 11 jobs",
+      "timestamp": "2026-02-13T11:19:38.585240"
+    },
+    {
+      "name": "Nordic Development Fund [NDF]",
+      "url": "https://www.ndf.int/contact-us/jobs.html",
+      "status": "success",
+      "script_file": "scrapers/scrape_ndf.py",
+      "vacancies_found": 2,
+      "has_pagination": false,
+      "notes": "Found 2 jobs",
+      "timestamp": "2026-02-13T11:19:38.950284"
+    },
+    {
+      "name": "United Nations Framework Convention for Climate Change [UNFCCC]",
+      "url": "https://unfccc.int/secretariat/employment/recruitment",
+      "status": "failed",
+      "script_file": null,
+      "vacancies_found": null,
+      "has_pagination": false,
+      "notes": "No module named 'playwright'",
+      "timestamp": "2026-02-13T11:19:38.953715"
+    },
+    {
+      "name": "European Union Satellite Centre [SATCEN]",
+      "url": "https://www.satcen.europa.eu/recruitment/jobs",
+      "status": "success",
+      "script_file": "scrapers/scrape_satcen.py",
+      "vacancies_found": 8,
+      "has_pagination": false,
+      "notes": "Found 8 jobs",
+      "timestamp": "2026-02-13T11:19:40.153273"
+    },
+    {
+      "name": "North Atlantic Treaty Organisation [NATO]",
+      "url": "https://www.nato.int/en/work-with-us/careers/vacancies",
+      "status": "success",
+      "script_file": "scrapers/scrape_nato.py",
+      "vacancies_found": 53,
+      "has_pagination": false,
+      "notes": "Found 53 jobs",
+      "timestamp": "2026-02-13T11:19:40.489718"
+    },
+    {
+      "name": "Council of Europe [CE]",
+      "url": "https://talents.coe.int/en_GB/careersmarketplace",
+      "status": "success",
+      "script_file": "scrapers/scrape_coe.py",
+      "vacancies_found": 4,
+      "has_pagination": false,
+      "notes": "Found 4 jobs",
+      "timestamp": "2026-02-13T11:19:41.265183"
+    },
+    {
+      "name": "European Agency for the operational management of large-scale IT systems in the area of freedom, security and justice [EU-LISA]",
+      "url": "https://erecruitment.eulisa.europa.eu/en",
+      "status": "success",
+      "script_file": "scrapers/scrape_eulisa.py",
+      "vacancies_found": 4,
+      "has_pagination": false,
+      "notes": "Found 4 jobs",
+      "timestamp": "2026-02-13T11:19:42.208678"
+    },
+    {
       "name": "European Commission [EC]",
       "url": "https://eu-careers.europa.eu/en/job-opportunities/open-vacancies/ec_vacancies",
       "status": "success",
       "script_file": "scrapers/scrape_ec.py",
-      "vacancies_found": 57,
+      "vacancies_found": 59,
       "has_pagination": false,
-      "notes": "Found 57 jobs",
-      "timestamp": "2026-02-12T18:15:21.976000"
+      "notes": "Found 59 jobs",
+      "timestamp": "2026-02-13T11:19:45.888990"
     },
     {
       "name": "European Atomic Energy Community [Euratom]",
@@ -396,7 +396,7 @@
       "vacancies_found": 1,
       "has_pagination": false,
       "notes": "Found 1 jobs",
-      "timestamp": "2026-02-12T18:15:23.104440"
+      "timestamp": "2026-02-13T11:19:47.822406"
     },
     {
       "name": "Organisation for Economic Co-operation and Development [OECD]",
@@ -406,27 +406,27 @@
       "vacancies_found": 28,
       "has_pagination": false,
       "notes": "Found 28 jobs",
-      "timestamp": "2026-02-12T18:15:23.290696"
+      "timestamp": "2026-02-13T11:19:48.045128"
     },
     {
       "name": "World Health Organization [WHO]",
       "url": "https://careers.who.int/careersection/ex/jobsearch.ftl",
       "status": "success",
       "script_file": "scrapers/scrape_who.py",
-      "vacancies_found": 60,
+      "vacancies_found": 54,
       "has_pagination": false,
-      "notes": "Found 60 jobs",
-      "timestamp": "2026-02-12T18:15:26.118539"
+      "notes": "Found 54 jobs",
+      "timestamp": "2026-02-13T11:19:51.317274"
     },
     {
       "name": "Food and Agricultural Organization [FAO]",
       "url": "https://jobs.fao.org/careersection/fao_external/jobsearch.ftl",
       "status": "success",
       "script_file": "scrapers/scrape_fao.py",
-      "vacancies_found": 135,
+      "vacancies_found": 125,
       "has_pagination": false,
-      "notes": "Found 135 jobs",
-      "timestamp": "2026-02-12T18:15:31.599474"
+      "notes": "Found 125 jobs",
+      "timestamp": "2026-02-13T11:19:56.068820"
     },
     {
       "name": "World Intellectual Property Organization [WIPO]",
@@ -436,7 +436,7 @@
       "vacancies_found": 11,
       "has_pagination": false,
       "notes": "Found 11 jobs",
-      "timestamp": "2026-02-12T18:15:31.920662"
+      "timestamp": "2026-02-13T11:19:56.322860"
     },
     {
       "name": "International Atomic Energy Agency [IAEA]",
@@ -446,7 +446,7 @@
       "vacancies_found": 27,
       "has_pagination": false,
       "notes": "Found 27 jobs",
-      "timestamp": "2026-02-12T18:15:33.961354"
+      "timestamp": "2026-02-13T11:19:58.224274"
     },
     {
       "name": "European Central Bank [ECB]",
@@ -456,7 +456,7 @@
       "vacancies_found": 10,
       "has_pagination": false,
       "notes": "Found 10 jobs",
-      "timestamp": "2026-02-12T18:15:34.694466"
+      "timestamp": "2026-02-13T11:19:59.118124"
     },
     {
       "name": "European Environment Agency [EEA]",
@@ -466,7 +466,7 @@
       "vacancies_found": 3,
       "has_pagination": false,
       "notes": "Found 3 jobs",
-      "timestamp": "2026-02-12T18:15:34.944015"
+      "timestamp": "2026-02-13T11:19:59.347245"
     },
     {
       "name": "European Railway Agency [ERA]",
@@ -476,7 +476,7 @@
       "vacancies_found": 10,
       "has_pagination": false,
       "notes": "Found 10 jobs",
-      "timestamp": "2026-02-12T18:15:35.100306"
+      "timestamp": "2026-02-13T11:19:59.511336"
     },
     {
       "name": "European Data Protection Supervisor [EDPS]",
@@ -486,7 +486,7 @@
       "vacancies_found": 4,
       "has_pagination": false,
       "notes": "Found 4 jobs",
-      "timestamp": "2026-02-12T18:15:35.287600"
+      "timestamp": "2026-02-13T11:19:59.735632"
     },
     {
       "name": "European Insurance and Occupational Pensions Authority [EIOPA]",
@@ -496,7 +496,7 @@
       "vacancies_found": 5,
       "has_pagination": false,
       "notes": "Found 5 jobs",
-      "timestamp": "2026-02-12T18:15:35.487129"
+      "timestamp": "2026-02-13T11:19:59.939325"
     },
     {
       "name": "European Food Safety Authority [EFSA]",
@@ -506,7 +506,7 @@
       "vacancies_found": 3,
       "has_pagination": false,
       "notes": "Found 3 jobs",
-      "timestamp": "2026-02-12T18:15:35.794010"
+      "timestamp": "2026-02-13T11:20:00.266107"
     },
     {
       "name": "European Centre for Disease Prevention and Control [ECDC]",
@@ -516,7 +516,7 @@
       "vacancies_found": 2,
       "has_pagination": false,
       "notes": "Found 2 jobs",
-      "timestamp": "2026-02-12T18:15:35.980524"
+      "timestamp": "2026-02-13T11:20:00.461394"
     },
     {
       "name": "European Union Drugs Agency [EUDA]",
@@ -526,7 +526,7 @@
       "vacancies_found": 27,
       "has_pagination": false,
       "notes": "Found 27 jobs",
-      "timestamp": "2026-02-12T18:15:36.436504"
+      "timestamp": "2026-02-13T11:20:01.044583"
     },
     {
       "name": "European Union Agency for Fundamental Rights [FRA]",
@@ -536,7 +536,7 @@
       "vacancies_found": null,
       "has_pagination": false,
       "notes": "No jobs found (may be empty or scraper issue)",
-      "timestamp": "2026-02-12T18:15:36.653956"
+      "timestamp": "2026-02-13T11:20:01.265428"
     },
     {
       "name": "European Banking Authority [EBA]",
@@ -546,7 +546,7 @@
       "vacancies_found": 2,
       "has_pagination": false,
       "notes": "Found 2 jobs",
-      "timestamp": "2026-02-12T18:15:38.009838"
+      "timestamp": "2026-02-13T11:20:03.527446"
     },
     {
       "name": "European Securities and Markets Authority [ESMA]",
@@ -556,7 +556,7 @@
       "vacancies_found": 1,
       "has_pagination": false,
       "notes": "Found 1 jobs",
-      "timestamp": "2026-02-12T18:15:38.204462"
+      "timestamp": "2026-02-13T11:20:03.759126"
     },
     {
       "name": "International Energy Agency [IEA]",
@@ -566,7 +566,7 @@
       "vacancies_found": 2,
       "has_pagination": false,
       "notes": "Found 2 jobs",
-      "timestamp": "2026-02-12T18:15:38.539472"
+      "timestamp": "2026-02-13T11:20:04.193941"
     },
     {
       "name": "Council of Europe Development Bank [CEB]",
@@ -576,7 +576,7 @@
       "vacancies_found": 3,
       "has_pagination": false,
       "notes": "Found 3 jobs",
-      "timestamp": "2026-02-12T18:15:38.900084"
+      "timestamp": "2026-02-13T11:20:04.505289"
     },
     {
       "name": "European Space Agency [ESA]",
@@ -586,7 +586,7 @@
       "vacancies_found": 25,
       "has_pagination": false,
       "notes": "Found 25 jobs",
-      "timestamp": "2026-02-12T18:15:39.312362"
+      "timestamp": "2026-02-13T11:20:05.009437"
     },
     {
       "name": "UNESCO",
@@ -596,27 +596,37 @@
       "vacancies_found": 25,
       "has_pagination": false,
       "notes": "Found 25 jobs",
-      "timestamp": "2026-02-12T18:15:39.641809"
+      "timestamp": "2026-02-13T11:20:05.359399"
+    },
+    {
+      "name": "World Tourism Organization [UNWTO]",
+      "url": "https://www.untourism.int/work-with-us",
+      "status": "success",
+      "script_file": "scrapers/scrape_unwto.py",
+      "vacancies_found": 15,
+      "has_pagination": false,
+      "notes": "Found 15 jobs",
+      "timestamp": "2026-02-13T11:20:05.619963"
     },
     {
       "name": "International Maritime Organization [IMO]",
       "url": "https://recruit.imo.org/vacancies",
-      "status": "failed",
-      "script_file": null,
-      "vacancies_found": null,
+      "status": "success",
+      "script_file": "scrapers/scrape_imo.py",
+      "vacancies_found": 5,
       "has_pagination": false,
-      "notes": "No jobs found (may be empty or scraper issue)",
-      "timestamp": "2026-02-12T18:15:40.205144"
+      "notes": "Found 5 jobs",
+      "timestamp": "2026-02-13T11:20:06.267318"
     },
     {
       "name": "World Meteorological Organization [WMO]",
       "url": "https://erecruit.wmo.int/public/",
       "status": "success",
       "script_file": "scrapers/scrape_wmo.py",
-      "vacancies_found": 15,
+      "vacancies_found": 11,
       "has_pagination": false,
-      "notes": "Found 15 jobs",
-      "timestamp": "2026-02-12T18:15:40.498652"
+      "notes": "Found 11 jobs",
+      "timestamp": "2026-02-13T11:20:06.624477"
     },
     {
       "name": "European Aviation Safety Agency [EASA]",
@@ -626,7 +636,7 @@
       "vacancies_found": 4,
       "has_pagination": false,
       "notes": "Found 4 jobs",
-      "timestamp": "2026-02-12T18:15:40.766232"
+      "timestamp": "2026-02-13T11:20:06.949172"
     },
     {
       "name": "EUTELSAT",
@@ -636,7 +646,7 @@
       "vacancies_found": 25,
       "has_pagination": false,
       "notes": "Found 25 jobs",
-      "timestamp": "2026-02-12T18:15:41.237955"
+      "timestamp": "2026-02-13T11:20:07.408584"
     },
     {
       "name": "European Bank for Reconstruction and Development [EBRD]",
@@ -646,7 +656,17 @@
       "vacancies_found": 25,
       "has_pagination": false,
       "notes": "Found 25 jobs",
-      "timestamp": "2026-02-12T18:15:41.495011"
+      "timestamp": "2026-02-13T11:20:07.648473"
+    },
+    {
+      "name": "European Broadcasting Union [EBU]",
+      "url": "https://www.ebu.ch/careers",
+      "status": "success",
+      "script_file": "scrapers/scrape_ebu.py",
+      "vacancies_found": 5,
+      "has_pagination": false,
+      "notes": "Found 5 jobs",
+      "timestamp": "2026-02-13T11:20:07.996474"
     },
     {
       "name": "European Southern Observatory [ESO]",
@@ -656,7 +676,7 @@
       "vacancies_found": 13,
       "has_pagination": false,
       "notes": "Found 13 jobs",
-      "timestamp": "2026-02-12T18:15:41.977100"
+      "timestamp": "2026-02-13T11:20:08.228405"
     },
     {
       "name": "European Medicines Agency [EMA]",
@@ -666,27 +686,27 @@
       "vacancies_found": 1,
       "has_pagination": false,
       "notes": "Found 1 jobs",
-      "timestamp": "2026-02-12T18:15:42.200053"
+      "timestamp": "2026-02-13T11:20:08.428428"
     },
     {
       "name": "European Centre for Medium-Range Weather Forecasts [ECMWF]",
       "url": "https://jobs.ecmwf.int/Home/Job",
       "status": "success",
       "script_file": "scrapers/scrape_ecmwf.py",
-      "vacancies_found": 3,
+      "vacancies_found": 4,
       "has_pagination": false,
-      "notes": "Found 3 jobs",
-      "timestamp": "2026-02-12T18:15:42.527631"
+      "notes": "Found 4 jobs",
+      "timestamp": "2026-02-13T11:20:08.705353"
     },
     {
       "name": "European Organisation for the Safety of Air Navigation [EUROCONTROL]",
       "url": "https://jobs.eurocontrol.int/eurocontrol-vacancies/",
-      "status": "failed",
-      "script_file": null,
-      "vacancies_found": null,
+      "status": "success",
+      "script_file": "scrapers/scrape_eurocontrol.py",
+      "vacancies_found": 3,
       "has_pagination": false,
-      "notes": "HTTPSConnectionPool(host='jobs.eurocontrol.int', port=443): Max retries exceeded with url: /wp-admin/admin-ajax.php (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)')))",
-      "timestamp": "2026-02-12T18:15:45.692650"
+      "notes": "Found 3 jobs",
+      "timestamp": "2026-02-13T11:20:15.863449"
     },
     {
       "name": "World Trade Organization [WTO]",
@@ -696,7 +716,7 @@
       "vacancies_found": 2,
       "has_pagination": false,
       "notes": "Found 2 jobs",
-      "timestamp": "2026-02-12T18:15:46.041190"
+      "timestamp": "2026-02-13T11:20:16.305144"
     },
     {
       "name": "European Molecular Biology Laboratory [EMBL]",
@@ -706,7 +726,7 @@
       "vacancies_found": 31,
       "has_pagination": false,
       "notes": "Found 31 jobs",
-      "timestamp": "2026-02-12T18:15:46.830029"
+      "timestamp": "2026-02-13T11:20:17.192173"
     },
     {
       "name": "UNHCR",
@@ -716,7 +736,7 @@
       "vacancies_found": 40,
       "has_pagination": false,
       "notes": "Found 40 jobs",
-      "timestamp": "2026-02-12T18:15:48.265322"
+      "timestamp": "2026-02-13T11:20:18.729181"
     },
     {
       "name": "The Global Fund",
@@ -726,17 +746,17 @@
       "vacancies_found": 1,
       "has_pagination": false,
       "notes": "Found 1 jobs",
-      "timestamp": "2026-02-12T18:15:49.026676"
+      "timestamp": "2026-02-13T11:20:19.855869"
     },
     {
       "name": "EU Careers",
       "url": "https://eu-careers.europa.eu/en/non-permanent-contract-ec",
       "status": "success",
       "script_file": "scrapers/scrape_eu_careers.py",
-      "vacancies_found": 55,
+      "vacancies_found": 57,
       "has_pagination": false,
-      "notes": "Found 55 jobs",
-      "timestamp": "2026-02-12T18:15:54.138400"
+      "notes": "Found 57 jobs",
+      "timestamp": "2026-02-13T11:20:24.692047"
     },
     {
       "name": "Anti-Money Laundering Authority [AMLA]",
@@ -746,7 +766,127 @@
       "vacancies_found": 17,
       "has_pagination": false,
       "notes": "Found 17 jobs",
-      "timestamp": "2026-02-12T18:15:54.291327"
+      "timestamp": "2026-02-13T11:20:24.862707"
+    },
+    {
+      "name": "European Chemicals Agency [ECHA]",
+      "url": "https://jobs.echa.europa.eu/psp/pshrrcr/EMPLOYEE/HRMS/c/HRS_HRAM.HRS_APP_SCHJOB.GBL?FOCUS=Applicant&languageCd=ENG",
+      "status": "success",
+      "script_file": "scrapers_playwright/scrape_echa_pw.py",
+      "vacancies_found": 272,
+      "has_pagination": false,
+      "notes": "Found 272 jobs",
+      "timestamp": "2026-02-13T11:23:45.441911"
+    },
+    {
+      "name": "European Council [Council]",
+      "url": "https://www.consilium.europa.eu/en/general-secretariat/jobs/vacancies/",
+      "status": "success",
+      "script_file": "scrapers_playwright/scrape_council_pw.py",
+      "vacancies_found": 27,
+      "has_pagination": false,
+      "notes": "Found 27 jobs",
+      "timestamp": "2026-02-13T11:23:47.519953"
+    },
+    {
+      "name": "European Court of Auditors [ECA]",
+      "url": "https://www.eca.europa.eu/en/job-opportunities#page-search---index---lang---en_US",
+      "status": "success",
+      "script_file": "scrapers_playwright/scrape_eca_pw.py",
+      "vacancies_found": 5,
+      "has_pagination": false,
+      "notes": "Found 5 jobs",
+      "timestamp": "2026-02-13T11:23:50.200730"
+    },
+    {
+      "name": "European Fisheries Control Agency [EFCA]",
+      "url": "https://www.efca.europa.eu/en/content/recruitment",
+      "status": "success",
+      "script_file": "scrapers_playwright/scrape_efca_pw.py",
+      "vacancies_found": 5,
+      "has_pagination": false,
+      "notes": "Found 5 jobs",
+      "timestamp": "2026-02-13T11:23:52.620054"
+    },
+    {
+      "name": "European Investment Bank [EIB]",
+      "url": "https://erecruitment.eib.org/psc/hr/EIBJOBS/CAREERS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL?Page=HRS_APP_SCHJOB_FL&Action=U&Focus=Applicant&SiteId=1",
+      "status": "success",
+      "script_file": "scrapers_playwright/scrape_eib_pw.py",
+      "vacancies_found": 14,
+      "has_pagination": false,
+      "notes": "Found 14 jobs",
+      "timestamp": "2026-02-13T11:23:58.344414"
+    },
+    {
+      "name": "European Stability Mechanism [ESM]",
+      "url": "https://vacancies.esm.europa.eu/#en/sites/CX",
+      "status": "success",
+      "script_file": "scrapers_playwright/scrape_esm_pw.py",
+      "vacancies_found": 15,
+      "has_pagination": false,
+      "notes": "Found 15 jobs",
+      "timestamp": "2026-02-13T11:24:05.176061"
+    },
+    {
+      "name": "European Union Intellectual Property Office [EUIPO]",
+      "url": "https://career012.successfactors.eu/career?company=C0001250580P",
+      "status": "success",
+      "script_file": "scrapers_playwright/scrape_euipo_pw.py",
+      "vacancies_found": 5,
+      "has_pagination": false,
+      "notes": "Found 5 jobs",
+      "timestamp": "2026-02-13T11:24:11.077511"
+    },
+    {
+      "name": "The European Union's Judicial Cooperation Unit [EUROJUST]",
+      "url": "https://eurojust.tal.net/vx/lang-en-GB/mobile-0/appcentre-ext/brand-4/xf-c3c2cdbdccf8/candidate/jobboard/vacancy/3/adv/",
+      "status": "success",
+      "script_file": "scrapers_playwright/scrape_eurojust_pw.py",
+      "vacancies_found": 1,
+      "has_pagination": false,
+      "notes": "Found 1 jobs",
+      "timestamp": "2026-02-13T11:24:15.345215"
+    },
+    {
+      "name": "European Patent Office [EPO]",
+      "url": "https://jobs.epo.org/search/?createNewAlert=false&q=&optionsFacetsDD_department=&optionsFacetsDD_customfield1=",
+      "status": "success",
+      "script_file": "scrapers_playwright/scrape_epo_pw.py",
+      "vacancies_found": 4,
+      "has_pagination": false,
+      "notes": "Found 4 jobs",
+      "timestamp": "2026-02-13T11:24:19.960391"
+    },
+    {
+      "name": "International Coffee Organization [ICO]",
+      "url": "https://ico.org/resources/vacancies/",
+      "status": "success",
+      "script_file": "scrapers_playwright/scrape_ico_pw.py",
+      "vacancies_found": 4,
+      "has_pagination": false,
+      "notes": "Found 4 jobs",
+      "timestamp": "2026-02-13T11:24:26.269624"
+    },
+    {
+      "name": "International Olive Oil Council [IOOC]",
+      "url": "https://www.internationaloliveoil.org/contracts-grants-vacancies/vacancies/page/2/",
+      "status": "success",
+      "script_file": "scrapers_playwright/scrape_iooc_pw.py",
+      "vacancies_found": 14,
+      "has_pagination": false,
+      "notes": "Found 14 jobs",
+      "timestamp": "2026-02-13T11:24:53.686607"
+    },
+    {
+      "name": "Nordic Investment Bank [NIB]",
+      "url": "https://www.nib.int/careers",
+      "status": "success",
+      "script_file": "scrapers_playwright/scrape_nib_pw.py",
+      "vacancies_found": 4,
+      "has_pagination": false,
+      "notes": "Found 4 jobs",
+      "timestamp": "2026-02-13T11:24:58.849660"
     }
   ]
 }

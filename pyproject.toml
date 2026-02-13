@@ -1,0 +1,15 @@
+[project]
+name = "scrape"
+version = "0.1.0"
+description = "Job vacancy scrapers"
+readme = "PLAN_NEW_SCRAPERS.md"
+requires-python = "==3.13.*"
+dependencies = [
+  "beautifulsoup4>=4.12.3",
+  "playwright>=1.58.0",
+  "requests>=2.32.3",
+  "urllib3>=2.2.0",
+]
+
+[tool.uv]
+package = false

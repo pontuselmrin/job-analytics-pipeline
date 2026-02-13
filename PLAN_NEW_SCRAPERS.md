@@ -1,112 +1,65 @@
-# Plan: Implement Scrapers for Remaining Sites
+# Plan: Remaining Sites via Playwright
 
 ## Background
 
-The project scrapes job listings from ~100 European/international organization websites. There are currently 44 working scrapers in `scrapers/` that all use shared utilities from `scrapers/base.py`. The file `sites.csv` tracks all sites with columns: `name`, `url`, `scraper`. Sites with a blank `scraper` column still need scrapers implemented.
+The repo now has two scraper tracks:
 
-## Project Structure
+- `scrapers/` for direct HTTP/API scrapers
+- `scrapers_playwright/` for browser-automation scrapers (anti-bot/JS-heavy sites)
 
-- `scrapers/base.py` — Shared utilities: `fetch()`, `normalize_url()`, `extract_links()`, `scrape_workday()`, `scrape_taleo()`
-- `scrapers/scrape_*.py` — Individual scrapers, each exporting a `scrape()` function returning `list[dict]` (minimum keys: `title`, `url`)
-- `test_scrapers.py` — Test runner that loads all scrapers via `importlib` and calls `scrape()`. Has a `SCRAPER_INFO` dict mapping filename to `(name, url)`.
-- `sites.csv` — Master list of all sites with scraper coverage status
-- `log_utils.py` — Logging utilities used by test runner
+Both tracks use the same output contract: `scrape() -> list[dict]` with at least `title` and `url`.
 
-## Scraper Contract
+## New Playwright Structure
 
-Every scraper must:
-1. Live in `scrapers/scrape_<abbrev>.py`
-2. Import from `base` (e.g., `from base import fetch, normalize_url, extract_links`)
-3. Export a `scrape()` function returning `list[dict]` with at minimum `title` and `url` keys
-4. Include `if __name__ == "__main__"` block for standalone testing
-5. Be added to `SCRAPER_INFO` in `test_scrapers.py`
-6. Have its filename noted in the `scraper` column of `sites.csv`
+- `scrapers_playwright/base_pw.py`
+  - shared browser runtime
+  - headless-first with headful fallback
+  - HTML link extraction helpers
+  - URL normalization and deduplication
+- `scrapers_playwright/scrape_*_pw.py`
+  - site-specific Playwright implementations
+- `test_playwright_scrapers.py`
+  - dedicated runner for Playwright scrapers
+- `PLAYWRIGHT_SCRAPERS.md`
+  - setup + run documentation
 
-## Existing Patterns to Reuse
+## Environment
 
-### Pattern A: Simple link extraction
-```python
-from bs4 import BeautifulSoup
-from base import fetch, extract_links
+Project is now `uv`-managed and Python-pinned:
 
-BASE_URL = "https://example.org"
-URL = f"{BASE_URL}/careers"
+- `.python-version` -> `3.13`
+- `pyproject.toml` + `uv.lock`
 
-def scrape():
-    resp = fetch(URL)
-    soup = BeautifulSoup(resp.text, "html.parser")
-    return extract_links(soup, "/job/", BASE_URL)
+Setup and run:
+
+```bash
+uv sync
+uv run python -m playwright install chromium
+uv run python test_playwright_scrapers.py
 ```
 
-### Pattern B: Table parsing
-```python
-from bs4 import BeautifulSoup
-from base import fetch, normalize_url
+## Implemented Remaining Sites (Playwright)
 
-def scrape():
-    resp = fetch(URL)
-    soup = BeautifulSoup(resp.text, "html.parser")
-    table = soup.find("table")
-    jobs = []
-    for row in table.find("tbody").find_all("tr"):
-        cells = row.find_all("td")
-        link = cells[0].find("a")
-        jobs.append({"title": link.get_text(strip=True), "url": normalize_url(link["href"], BASE_URL)})
-    return jobs
-```
+- European Chemicals Agency [ECHA] -> `scrape_echa_pw.py`
+- European Council [Council] -> `scrape_council_pw.py`
+- European Court of Auditors [ECA] -> `scrape_eca_pw.py`
+- European Fisheries Control Agency [EFCA] -> `scrape_efca_pw.py`
+- European Investment Bank [EIB] -> `scrape_eib_pw.py`
+- European Stability Mechanism [ESM] -> `scrape_esm_pw.py`
+- European Union Intellectual Property Office [EUIPO] -> `scrape_euipo_pw.py`
+- The European Union's Judicial Cooperation Unit [EUROJUST] -> `scrape_eurojust_pw.py`
+- European Patent Office [EPO] -> `scrape_epo_pw.py`
+- International Coffee Organization [ICO] -> `scrape_ico_pw.py`
+- International Olive Oil Council [IOOC] -> `scrape_iooc_pw.py`
+- Nordic Investment Bank [NIB] -> `scrape_nib_pw.py`
 
-### Pattern C: Paginated HTML (like scrape_eu_careers.py)
-```python
-def scrape():
-    all_jobs = []
-    page = 0
-    while True:
-        jobs = scrape_page(page)
-        if not jobs: break
-        all_jobs.extend(jobs)
-        page += 1
-        time.sleep(0.5)
-    return all_jobs
-```
+## Pending / Not Implemented
 
-### Pattern D: SmartRecruiters API (like scrape_oecd.py)
-```python
-API_URL = "https://api.smartrecruiters.com/v1/companies/COMPANY/postings"
-def scrape():
-    # offset-based pagination with limit=100
-```
+- European Company for the Financing of Railroad Rolling Stock [EUROFIMA]
+  - still no source URL in `sites.csv`
 
-### Pattern E: Workday API (4 existing scrapers)
-```python
-from base import scrape_workday
-def scrape():
-    return scrape_workday(BASE_URL, API_URL)
-```
+## Notes
 
-## Sites NOT Feasible Without Browser Automation – need special handling
-
-| Site | Reason |
-|------|--------|
-| European Council [Council] | Cloudflare blocks requests |
-| ECA (Court of Auditors) | SharePoint + gestmax iframe, JS-only |
-| EFCA (Fisheries Control) | Cloudflare blocks requests |
-| European Ombudsman | Full Angular SPA, no SSR |
-| ECHA (Chemicals Agency) | PeopleSoft, requires cookie/auth flow |
-| EIB (Investment Bank) | PeopleSoft, requires cookie/auth flow |
-| EUIPO (IP Office) | CloudFront |
-| ESM (Stability Mechanism) | Oracle CX SPA, hash-routed, XHR-only data |
-| EUROJUST | empty |
-| NIB (Nordic Investment Bank) | React hydration with base64-encoded data |
-| IOOC (Olive Oil Council) | Dynamic loading, no initial HTML content |
-| ICO (Coffee Org) | no jobs |
-| EUROFIMA | no jobs |
-| EFTA | Cloudflare |
-| UNFCC | JS |
-
-
-## After Implementation (Completed)
-
-1. Added each new scraper to `SCRAPER_INFO` in `test_scrapers.py` (completed).
-2. Updated `sites.csv` scraper column for each implemented scraper (completed).
-3. Validation run attempted; use project venv interpreter (`./venv/bin/python`) for runtime tests.
-4. Some sites may have 0 current vacancies — this remains acceptable when scraper execution succeeds.
+- Some targets may legitimately return zero vacancies at runtime.
+- A scraper is considered successful if execution works and returns structured output.
+- `test_scrapers.py` remains unchanged for non-Playwright scrapers.

@@ -33,7 +33,7 @@ SCRAPER_INFO = {
     "scrape_euspa.py": ("European GNSS Agency [GSA]", "https://www.euspa.europa.eu/opportunities/careers"),
     "scrape_eige.py": ("European Institute for Gender Equality [EIGE]", "https://eige.europa.eu/about/recruitment"),
     "scrape_eit.py": ("European Institute of Innovation and Technology [EIT]", "https://www.eit.europa.eu/work-with-us/careers/vacancies/open"),
-    "scrape_etf.py": ("European Training Foundation [ETF]", "https://www.etf.europa.eu/en/about/recruitment"),
+    "scrape_etf.py": ("European Training Foundation [ETF]", "https://www.etf.europa.eu/en/about/working-with-us/vacancies"),
     "scrape_cepol.py": ("European Police College [CEPOL]", "https://www.cepol.europa.eu/work-us/careers/vacancies"),
     "scrape_efta.py": ("European Free Trade Association [EFTA]", "https://www.efta.int/careers/open-vacancies"),
     "scrape_ices.py": ("International Council for the Exploration of the Sea [ICES]", "https://www.ices.dk/about-ICES/Jobs-in-ICES/Pages/default.aspx"),
@@ -49,7 +49,6 @@ SCRAPER_INFO = {
     "scrape_nato.py": ("North Atlantic Treaty Organisation [NATO]", "https://www.nato.int/en/work-with-us/careers/vacancies"),
     "scrape_coe.py": ("Council of Europe [CE]", "https://talents.coe.int/en_GB/careersmarketplace"),
     "scrape_eulisa.py": ("European Agency for the operational management of large-scale IT systems in the area of freedom, security and justice [EU-LISA]", "https://erecruitment.eulisa.europa.eu/en"),
-    "scrape_efsf.py": ("European Financial Stability Facility [EFSF]", "https://www.esm.europa.eu/careers/vacancies"),
     "scrape_ec.py": ("European Commission [EC]", "https://eu-careers.europa.eu/en/job-opportunities/open-vacancies/ec_vacancies"),
     "scrape_euratom.py": ("European Atomic Energy Community [Euratom]", "https://eu-careers.europa.eu/en/job-opportunities/open-for-application"),
     # API-based scrapers
