@@ -1,6 +1,8 @@
 """Shared utilities for all scrapers."""
 import re
 import time
+from email.utils import parsedate_to_datetime
+
 import requests
 
 DEFAULT_HEADERS = {
@@ -24,8 +26,29 @@ TALEO_HEADERS = {
 }
 
 
+def _retry_delay_seconds(exc: requests.RequestException, attempt: int) -> float:
+    """Compute retry delay, honoring Retry-After for 429 responses."""
+    default = float(2 ** attempt)
+    resp = getattr(exc, "response", None)
+    if resp is None or getattr(resp, "status_code", None) != 429:
+        return default
+
+    header = (resp.headers or {}).get("Retry-After", "")
+    if not header:
+        return default
+
+    try:
+        return max(0.0, float(header))
+    except ValueError:
+        try:
+            dt = parsedate_to_datetime(header)
+            return max(0.0, dt.timestamp() - time.time())
+        except Exception:
+            return default
+
+
 def fetch(url, method="GET", headers=None, **kwargs):
-    """HTTP request with retry (3 attempts, exponential backoff)."""
+    """HTTP request with retry (3 attempts, 429-aware backoff)."""
     if headers is None:
         headers = DEFAULT_HEADERS
     for attempt in range(3):
@@ -33,10 +56,10 @@ def fetch(url, method="GET", headers=None, **kwargs):
             resp = requests.request(method, url, headers=headers, **kwargs)
             resp.raise_for_status()
             return resp
-        except requests.RequestException:
+        except requests.RequestException as exc:
             if attempt == 2:
                 raise
-            time.sleep(2 ** attempt)
+            time.sleep(_retry_delay_seconds(exc, attempt))
 
 
 def normalize_url(href, base_url):
@@ -77,6 +100,10 @@ def extract_links(soup, href_pattern, base_url, min_title_len=5, exclude_pattern
 
 def scrape_workday(base_url, api_url):
     """Full Workday pagination loop. Returns list of {"title", "url", "location"}."""
+    parts = api_url.rstrip("/").split("/")
+    site = parts[-2] if len(parts) >= 2 else "External"
+    site_prefix = f"/{site}"
+
     jobs = []
     offset = 0
     limit = 20
@@ -89,16 +116,32 @@ def scrape_workday(base_url, api_url):
             "searchText": "",
         }
         resp = fetch(api_url, method="POST", headers=WORKDAY_HEADERS, json=payload)
-        data = resp.json()
+        try:
+            data = resp.json()
+        except Exception:
+            # Some tenants occasionally return HTML maintenance pages.
+            # Treat this as no postings instead of crashing the whole batch.
+            break
+        if not isinstance(data, dict):
+            break
 
         postings = data.get("jobPostings", [])
         if not postings:
             break
 
         for job in postings:
+            external_path = job.get("externalPath", "")
+            if external_path and not external_path.startswith("/"):
+                external_path = "/" + external_path
+            if external_path.startswith(site_prefix + "/"):
+                full_path = external_path
+            else:
+                full_path = site_prefix + external_path
             jobs.append({
                 "title": job.get("title", ""),
-                "url": base_url + job.get("externalPath", ""),
+                # Most Workday sites require /<site>/job/... (e.g. /External/job/...)
+                # while API externalPath commonly starts at /job/...
+                "url": base_url + full_path,
                 "location": job.get("locationsText", ""),
             })
 
