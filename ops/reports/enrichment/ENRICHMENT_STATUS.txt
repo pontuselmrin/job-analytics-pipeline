@@ -1,0 +1,51 @@
+OBJECTIVE: Build enrichment module that visits each scraped job URL, extracts the full
+job description (HTML text or PDF), and stores standardized JSON per org.
+
+DONE:
+- Created enrichment/ package: config.py, schema.py, fetcher.py, enrich.py, __init__.py
+- Created scraper_registry.py (extracted SCRAPER_INFO from test files, both import from it)
+- Created enrich_all.py CLI (--org, --force, --playwright flags)
+- Created scrape_nato_taleo.py (replaced old PDF-based NATO scraper in registry)
+- Added Taleo detail page extractor (_extract_taleo using div.singleview)
+- Tested NATO-Taleo: 119/119 jobs enriched, avg 18k chars
+- Tested CERN: 63/63 jobs enriched, avg 7.6k chars
+- Ran test_enrichment.py across all 87 scrapers to find failures
+
+TEST RESULTS (enrichment_test_results.json):
+  47 ok, 1 pdf, 24 short/empty descriptions, 10 errors, 5 skipped
+
+CURRENT TASK: Fix the 34 failing enrichments. Diagnosed root causes:
+
+1. TALEO pages (WHO, FAO, WIPO, IAEA) - singleview div exists but empty for non-NATO Taleo
+   instances. Need to investigate WHO page structure specifically (decoded body has 13k chars).
+
+2. SMARTRECRUITERS (CEB, ESA, UNESCO, EASA, EUTELSAT) - body has 8-11k chars of server-rendered
+   content but current extraction misses it. Content isn't in article/main/job-description divs.
+   Need to find the right container selector.
+
+3. JS-ONLY / SPA (Workday: BIS/WTO/EMBL/UNHCR/GlobalFund, Oracle HCM: ACER/ESM,
+   Onlyfy: EUMETSAT, IMO, EUROPOL, Ombudsman) - body is empty, needs Playwright or API.
+   Workday has a JSON API we could use instead.
+
+4. GESTMAX (EP, EIOPA) - has 16k chars body, content exists but not matched by selectors.
+
+5. ADEQUASYS (ECDC, ESMA) - only 152 chars, description is in a downloadable PDF.
+
+6. SSL ERRORS (EDA, EUROCONTROL, ICO) - need verify=False in requests.
+
+7. OTHER: UNFCCC has 70k main tag but matched wrong. WCC has malformed URLs.
+   Council/ECA give 403/404 on detail pages.
+
+NEXT STEPS:
+1. Fix SmartRecruiters extraction (find correct div, ~5 orgs)
+2. Fix Taleo for WHO/FAO/WIPO/IAEA (inspect decoded HTML structure)
+3. Fix Gestmax extraction (EIOPA, EP)
+4. Add verify=False for SSL sites (EDA, EUROCONTROL, ICO)
+5. Handle Workday detail pages (API or mark as needs-playwright)
+6. Handle remaining JS-only sites (mark as needs-playwright or skip)
+7. Re-run test_enrichment.py to verify fixes
+
+KEY FILES:
+- enrichment/fetcher.py - where extraction logic lives, add new extractors here
+- enrichment_test_results.json - full test results
+- test_enrichment.py - test harness that checks all 87 scrapers
