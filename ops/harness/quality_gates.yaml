@@ -1,0 +1,9 @@
+defaults:
+  min_jobs_per_org: 1
+  min_words: 50
+  max_words: 10000
+  max_fetch_seconds_per_job: 30.0
+  allow_empty: false
+
+org_overrides:
+  {}
