@@ -4,12 +4,10 @@
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import os
 import subprocess
 import sys
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -20,22 +18,17 @@ sys.path.insert(0, str(PROJECT_ROOT / "scrapers_playwright"))
 
 from ops.harness.batches import BATCHES
 from ops.harness.enrichment_matrix import run_matrix
-from enrichment.fetcher import classify_fetch_error, extract_html_description, fetch_job_content
+from enrichment.runner import (
+    EventLogger,
+    RunnerConfig,
+    collect_postings_org_via_runner,
+    default_ndjson_path,
+    default_run_id,
+)
 from enrichment.schema import extract_abbrev
 from scraper_registry import SCRAPER_INFO, SCRAPER_INFO_PW
 
 REPORTS_DIR = PROJECT_ROOT / "ops" / "reports" / "batches"
-
-
-def _load_and_scrape(scraper_path: Path) -> list[dict]:
-    parent = str(scraper_path.parent)
-    if parent not in sys.path:
-        sys.path.insert(0, parent)
-    spec = importlib.util.spec_from_file_location("scraper", scraper_path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod.scrape()
-
 
 def _find_scraper_for_org(org_abbrev: str) -> tuple[Path, str, bool]:
     for filename, (org_name, _url) in SCRAPER_INFO.items():
@@ -47,100 +40,57 @@ def _find_scraper_for_org(org_abbrev: str) -> tuple[Path, str, bool]:
     raise KeyError(f"No scraper found for org {org_abbrev}")
 
 
-def _collect_postings_payload(batch_id: str) -> dict:
+def _collect_postings_payload(
+    batch_id: str,
+    *,
+    orgs: list[str] | None = None,
+    verbose: bool = True,
+    log_ndjson: Path | None = None,
+    run_id: str | None = None,
+    profile: bool = False,
+    max_jobs_per_org: int | None = None,
+    job_timeout_seconds: float = 30.0,
+) -> dict:
     ts = datetime.now(timezone.utc).isoformat()
+    local_run_id = run_id or default_run_id(f"batch-{batch_id.lower()}")
+    ndjson_path = log_ndjson or default_ndjson_path(local_run_id)
+    cfg = RunnerConfig(
+        run_id=local_run_id,
+        batch_id=batch_id,
+        verbose=verbose,
+        ndjson_path=ndjson_path,
+        profile=profile,
+    )
+    logger = EventLogger(cfg)
     payload: dict = {
         "batch_id": batch_id,
         "generated_at": ts,
+        "run_id": local_run_id,
+        "run_log": str(ndjson_path),
         "orgs": [],
     }
 
-    for org in BATCHES[batch_id]["orgs"]:
-        scraper_path, org_name, is_pw = _find_scraper_for_org(org)
-        org_block = {
-            "org_abbrev": org,
-            "org_name": org_name,
-            "scraper_file": str(scraper_path.relative_to(PROJECT_ROOT)),
-            "is_playwright_scraper": is_pw,
-            "jobs": [],
-            "scraper_error": "",
-        }
-
-        try:
-            jobs = _load_and_scrape(scraper_path)
-        except Exception as exc:  # noqa: BLE001
-            org_block["scraper_error"] = str(exc)
+    try:
+        target_orgs = orgs if orgs else BATCHES[batch_id]["orgs"]
+        for org in target_orgs:
+            scraper_path, org_name, is_pw = _find_scraper_for_org(org)
+            org_block = collect_postings_org_via_runner(
+                org_abbrev=org,
+                org_name=org_name,
+                scraper_path=scraper_path,
+                is_playwright_scraper=is_pw,
+                logger=logger,
+                profile=profile,
+                max_jobs=max_jobs_per_org,
+                job_timeout_seconds=job_timeout_seconds,
+            )
             payload["orgs"].append(org_block)
-            continue
-
-        for idx, job in enumerate(jobs, start=1):
-            title = (job.get("title") or "").strip()
-            url = (job.get("url") or "").strip()
-            item = {
-                "index": idx,
-                "title": title,
-                "url": url,
-                "content_type": "",
-                "enrich_status": "",
-                "status_reason": "",
-                "description": "",
-                "pdf_path": "",
-                "fetch_seconds": 0.0,
-                "error": "",
-            }
-
-            if not url:
-                item["enrich_status"] = "no_detail_url"
-                item["status_reason"] = "missing_url"
-                org_block["jobs"].append(item)
-                continue
-
-            started = time.perf_counter()
-            try:
-                result = fetch_job_content(
-                    url=url,
-                    org_abbrev=org,
-                    title=title or f"job-{idx}",
-                    use_playwright=is_pw,
-                )
-                item["fetch_seconds"] = round(time.perf_counter() - started, 3)
-                item["content_type"] = result.get("content_type", "")
-                item["enrich_status"] = result.get("enrich_status", "")
-                item["status_reason"] = result.get("status_reason", "")
-                item["description"] = result.get("description", "")
-                item["pdf_path"] = result.get("pdf_path", "")
-            except Exception as exc:  # noqa: BLE001
-                item["fetch_seconds"] = round(time.perf_counter() - started, 3)
-                status, reason = classify_fetch_error(exc)
-                # Some Playwright-only pages fail fast in HTTP preflight; recover by
-                # extracting directly with Playwright.
-                if is_pw:
-                    try:
-                        started = time.perf_counter()
-                        desc = extract_html_description(url, use_playwright=True)
-                        item["fetch_seconds"] = round(time.perf_counter() - started, 3)
-                        if len(desc) > 100:
-                            item["content_type"] = "html"
-                            item["enrich_status"] = "ok"
-                            item["status_reason"] = "playwright_fallback"
-                            item["description"] = desc
-                            org_block["jobs"].append(item)
-                            continue
-                    except Exception:
-                        pass
-
-                item["enrich_status"] = status
-                item["status_reason"] = reason
-                item["error"] = str(exc)
-
-            org_block["jobs"].append(item)
-
-        payload["orgs"].append(org_block)
-
-    return payload
+        return payload
+    finally:
+        logger.close()
 
 
-def _write_report(batch_id: str, results: list[dict], test_exit_code: int) -> tuple[Path, Path]:
+def _write_report(batch_id: str, orgs: list[str], results: list[dict], test_exit_code: int) -> tuple[Path, Path]:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).isoformat()
 
@@ -150,7 +100,7 @@ def _write_report(batch_id: str, results: list[dict], test_exit_code: int) -> tu
     payload = {
         "batch_id": batch_id,
         "generated_at": ts,
-        "orgs": BATCHES[batch_id]["orgs"],
+        "orgs": orgs,
         "test_exit_code": test_exit_code,
         "results": results,
     }
@@ -164,7 +114,7 @@ def _write_report(batch_id: str, results: list[dict], test_exit_code: int) -> tu
         f"Test exit code: `{test_exit_code}`",
         "",
         "## Orgs",
-        ", ".join(BATCHES[batch_id]["orgs"]),
+        ", ".join(orgs),
         "",
         "## Results",
         "| Org | Scraper Status | Enrich Status | Desc Len | Error |",
@@ -211,6 +161,13 @@ def _run_pytest_for_batch(batch_id: str) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run one review-gated scraper batch.")
     parser.add_argument("--batch", default="B01", help="Batch id (e.g. B01)")
+    parser.add_argument("--org", action="append", default=[], help="Run only specified org abbrev(s) within the batch.")
+    parser.add_argument("--quiet", action="store_true", help="Reduce per-job console verbosity.")
+    parser.add_argument("--log-ndjson", type=Path, help="Path to structured NDJSON run log.")
+    parser.add_argument("--profile", action="store_true", help="Enable pyinstrument profiling and write HTML reports.")
+    parser.add_argument("--max-jobs-per-org", type=int, help="Only process the first N jobs per org in postings/enrichment.")
+    parser.add_argument("--job-timeout-seconds", type=float, default=30.0, help="Hard timeout per job detail fetch call.")
+    parser.add_argument("--skip-tests", action="store_true", help="Skip pytest pre-checks for faster iterative org debugging.")
     args = parser.parse_args()
 
     batch_id = args.batch.upper()
@@ -218,18 +175,38 @@ def main() -> int:
         print(f"Unknown batch '{batch_id}'. Available: {', '.join(sorted(BATCHES))}")
         return 2
 
-    orgs = set(BATCHES[batch_id]["orgs"])
+    selected_orgs = [o.strip().upper() for o in args.org if o.strip()]
+    batch_orgs = [o.upper() for o in BATCHES[batch_id]["orgs"]]
+    if selected_orgs:
+        invalid = [o for o in selected_orgs if o not in batch_orgs]
+        if invalid:
+            print(f"Invalid --org for {batch_id}: {', '.join(invalid)}")
+            return 2
+        orgs_list = selected_orgs
+    else:
+        orgs_list = batch_orgs
+    orgs = set(orgs_list)
     print(f"Running batch {batch_id}: {BATCHES[batch_id]['label']}")
-    print(f"Orgs: {', '.join(BATCHES[batch_id]['orgs'])}")
+    print(f"Orgs: {', '.join(orgs_list)}")
 
-    test_exit_code = _run_pytest_for_batch(batch_id)
+    test_exit_code = 0 if args.skip_tests else _run_pytest_for_batch(batch_id)
     results = run_matrix(include_orgs=orgs, sleep_seconds=0.0)
-    postings_payload = _collect_postings_payload(batch_id)
+    postings_payload = _collect_postings_payload(
+        batch_id,
+        orgs=orgs_list,
+        verbose=not args.quiet,
+        log_ndjson=args.log_ndjson,
+        profile=args.profile,
+        max_jobs_per_org=args.max_jobs_per_org,
+        job_timeout_seconds=args.job_timeout_seconds,
+    )
 
-    md_path, json_path = _write_report(batch_id, results, test_exit_code)
+    md_path, json_path = _write_report(batch_id, orgs_list, results, test_exit_code)
     postings_path = _write_postings_json(batch_id, postings_payload)
 
     print(f"\nBatch report written to:\n- {md_path}\n- {json_path}\n- {postings_path}")
+    if postings_payload.get("run_log"):
+        print(f"- {postings_payload['run_log']} (NDJSON run log)")
     print("\nReview + commit checkpoint reached. Stop here for human review.")
 
     return test_exit_code
