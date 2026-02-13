@@ -11,4 +11,9 @@ BATCHES: dict[str, dict] = {
         "orgs": ["ACER", "BEREC", "BIS", "CEB", "CEDEFOP"],
         "notes": "Next five scrapers from scrapers/ alphabetical order, excluding prior-batch orgs.",
     },
+    "B03": {
+        "label": "Alphabetical Rollout: CEPOL to EC",
+        "orgs": ["CEPOL", "CERN", "CE", "CR", "CPVO", "EASA", "EBA", "EBRD", "EBU", "EC"],
+        "notes": "Next ten scrapers from scrapers/ alphabetical order after B02.",
+    },
 }
