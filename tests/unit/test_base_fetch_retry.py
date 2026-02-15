@@ -2,6 +2,7 @@ import pytest
 import requests
 
 import scrapers.base as base
+from tests.test_config import GENERIC_URLS
 
 
 class _FakeResp:
@@ -30,7 +31,7 @@ def test_fetch_uses_retry_after_for_429(monkeypatch):
     monkeypatch.setattr(base.requests, "request", fake_request)
     monkeypatch.setattr(base.time, "sleep", lambda s: sleeps.append(s))
 
-    out = base.fetch("https://example.org")
+    out = base.fetch(GENERIC_URLS["example"])
     assert out.status_code == 200
     assert calls["n"] == 2
     assert sleeps == [3.0]
@@ -50,7 +51,7 @@ def test_fetch_uses_exponential_backoff_without_retry_after(monkeypatch):
     monkeypatch.setattr(base.requests, "request", fake_request)
     monkeypatch.setattr(base.time, "sleep", lambda s: sleeps.append(s))
 
-    out = base.fetch("https://example.org")
+    out = base.fetch(GENERIC_URLS["example"])
     assert out.status_code == 200
     assert calls["n"] == 3
     assert sleeps == [1.0, 2.0]
@@ -70,7 +71,7 @@ def test_fetch_retries_non_429_errors_with_default_backoff(monkeypatch):
     monkeypatch.setattr(base.requests, "request", fake_request)
     monkeypatch.setattr(base.time, "sleep", lambda s: sleeps.append(s))
 
-    out = base.fetch("https://example.org")
+    out = base.fetch(GENERIC_URLS["example"])
     assert out.status_code == 200
     assert calls["n"] == 3
     assert sleeps == [1.0, 2.0]
