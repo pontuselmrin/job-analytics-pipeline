@@ -13,4 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv sync
+      - name: Create config files from examples
+        run: |
+          cp config.example.py config.py
+          cp enrichment/org_config.example.py enrichment/org_config.py
       - run: uv run pytest -m unit
