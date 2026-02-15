@@ -9,19 +9,7 @@ from bs4 import BeautifulSoup
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
-USER_AGENT = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
-)
-
-BLOCK_MARKERS = (
-    "cloudflare",
-    "attention required",
-    "verify you are human",
-    "captcha",
-    "access denied",
-    "request blocked",
-)
+from config import USER_AGENT, BLOCK_MARKERS
 
 Extractor = Callable[..., list[dict]]
 
@@ -102,7 +90,9 @@ def run_scraper(
                     java_script_enabled=True,
                 )
                 page = context.new_page()
-                response = page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+                response = page.goto(
+                    url, wait_until="domcontentloaded", timeout=timeout_ms
+                )
 
                 if wait_selectors:
                     for selector in wait_selectors:
