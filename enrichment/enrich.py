@@ -27,9 +27,9 @@ def enrich_org(
     job_timeout_seconds: float = 30.0,
 ) -> dict:
     """Scrape and enrich all jobs for a single organization."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Enriching: {org_name} [{org_abbrev}]")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     local_run_id = run_id or default_run_id(f"org-{org_abbrev.lower()}")
     ndjson_path = log_ndjson or default_ndjson_path(local_run_id)
@@ -110,7 +110,13 @@ def enrich_all(
                 results.append(result)
             except Exception as e:  # noqa: BLE001
                 print(f"\n  FAILED to enrich {org_name}: {e}")
-                logger.emit("org_done", org_abbrev=org_abbrev, org_name=org_name, scraper_error=str(e), job_count=0)
+                logger.emit(
+                    "org_done",
+                    org_abbrev=org_abbrev,
+                    org_name=org_name,
+                    scraper_error=str(e),
+                    job_count=0,
+                )
                 results.append(
                     {
                         "org_name": org_name,

@@ -1,5 +1,6 @@
 """Fetch job descriptions: PDF detection, download, and HTML text extraction."""
 
+import json
 import re
 import sys
 from datetime import date
@@ -9,36 +10,30 @@ from urllib.parse import unquote, urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from .config import MAX_DESCRIPTION_CHARS, PDF_DIR, REQUEST_TIMEOUT
+from config import USER_AGENT
+from .config import MAX_DESCRIPTION_CHARS, REQUEST_TIMEOUT
+from .org_config import (
+    SSL_INSECURE_DOMAINS,
+    PREFER_EMBEDDED_PDF_ORGS,
+    NEXTJS_PLATFORMS,
+    PLATFORM_A_DOMAINS,
+    API_BASED_V1_DOMAINS,
+    API_BASED_V2_DOMAINS,
+    TABLE_INTERFACE_DOMAINS,
+    PLAYWRIGHT_DOMAINS,
+)
 
 # Add scrapers dir to path so we can import base.fetch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scrapers"))
 from base import DEFAULT_HEADERS, fetch  # noqa: E402
 
-SSL_INSECURE_DOMAINS = {
-    "vacancies.eda.europa.eu",
-    "jobs.eurocontrol.int",
-    "ico.org",
-    "www.ico.org",
-}
-
+# Markers indicating a page requires JavaScript to render meaningful content
 JS_PLACEHOLDER_MARKERS = (
     "you need to enable javascript",
     "loading application",
     "loading\n.\n.\n.",
     "please wait",
 )
-
-PREFER_EMBEDDED_PDF_ORGS = {
-    "BEREC",
-    "CEDEFOP",
-    "EC",
-    "EBA",
-    "EMSA",
-    "ENISA",
-    "ERA",
-    "EDPS",
-}
 
 PDF_POSITIVE_MARKERS = (
     "vacancy",
@@ -72,7 +67,19 @@ PDF_NEGATIVE_MARKERS = (
 
 
 def _norm_words(text: str) -> set[str]:
-    stop = {"with", "from", "into", "the", "and", "for", "this", "that", "your", "our", "about"}
+    stop = {
+        "with",
+        "from",
+        "into",
+        "the",
+        "and",
+        "for",
+        "this",
+        "that",
+        "your",
+        "our",
+        "about",
+    }
     words = re.findall(r"[a-z0-9]{4,}", (text or "").lower())
     return {w for w in words if w not in stop}
 
@@ -94,12 +101,17 @@ def _verify_ssl(url: str) -> bool:
     return _url_host(url) not in SSL_INSECURE_DOMAINS
 
 
-def _is_echa_row_url(url: str) -> bool:
+def _is_table_row_url(url: str) -> bool:
+    """Check if URL points to a table-based interface with row fragments."""
     parsed = urlparse(url)
-    return parsed.netloc.lower() == "jobs.echa.europa.eu" and bool(re.search(r"row-(\d+)$", parsed.fragment or ""))
+    host = parsed.netloc.lower()
+    return any(domain in host for domain in TABLE_INTERFACE_DOMAINS) and bool(
+        re.search(r"row-(\d+)$", parsed.fragment or "")
+    )
 
 
-def _extract_echa_row_index(url: str) -> int | None:
+def _extract_table_row_index(url: str) -> int | None:
+    """Extract row index from a table-based interface URL fragment."""
     parsed = urlparse(url)
     m = re.search(r"row-(\d+)$", parsed.fragment or "")
     if not m:
@@ -137,13 +149,16 @@ def detect_content_type(url: str) -> str:
     return "html"
 
 
-def download_pdf(url: str, org_abbrev: str, title: str) -> str:
+def download_pdf(url: str, org_abbrev: str, title: str, run_id: str = "default") -> str:
     """Download a PDF and return its relative path from project root.
 
-    Saves to pdfs/{org_abbrev}/{slug}-{date}.pdf.
+    Saves to ops/runs/{run_id}/pdfs/{org_abbrev}/{slug}-{date}.pdf.
     Deletes partial downloads on failure.
     """
-    org_dir = PDF_DIR / org_abbrev
+    from .config import get_pdf_dir
+
+    pdf_dir = get_pdf_dir(run_id)
+    org_dir = pdf_dir / org_abbrev
     org_dir.mkdir(parents=True, exist_ok=True)
 
     slug = slugify(title)
@@ -151,15 +166,22 @@ def download_pdf(url: str, org_abbrev: str, title: str) -> str:
     filepath = org_dir / filename
 
     try:
-        resp = requests.get(url, headers=DEFAULT_HEADERS, stream=True,
-                            timeout=REQUEST_TIMEOUT, verify=_verify_ssl(url))
+        resp = requests.get(
+            url,
+            headers=DEFAULT_HEADERS,
+            stream=True,
+            timeout=REQUEST_TIMEOUT,
+            verify=_verify_ssl(url),
+        )
         resp.raise_for_status()
 
         with open(filepath, "wb") as f:
             for chunk in resp.iter_content(chunk_size=8192):
                 f.write(chunk)
 
-        return str(filepath.relative_to(PDF_DIR.parent))
+        from .config import PROJECT_ROOT
+
+        return str(filepath.relative_to(PROJECT_ROOT))
     except Exception:
         # Clean up partial download
         if filepath.exists():
@@ -167,17 +189,25 @@ def download_pdf(url: str, org_abbrev: str, title: str) -> str:
         raise
 
 
-def _download_echa_row_pdf(url: str, org_abbrev: str, title: str) -> str:
-    row_idx = _extract_echa_row_index(url)
+def _download_table_row_pdf(
+    url: str, org_abbrev: str, title: str, run_id: str = "default"
+) -> str:
+    """Download PDF from a table-based interface that triggers downloads via button clicks."""
+    row_idx = _extract_table_row_index(url)
     if row_idx is None:
-        raise RuntimeError("missing_echa_row_index")
+        raise RuntimeError("missing_table_row_index")
 
+    from .config import get_pdf_dir
+
+    PDF_DIR = get_pdf_dir(run_id)
     org_dir = PDF_DIR / org_abbrev
     org_dir.mkdir(parents=True, exist_ok=True)
     filename = f"{slugify(title)}-{date.today().isoformat()}.pdf"
     filepath = org_dir / filename
 
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scrapers_playwright"))
+    sys.path.insert(
+        0, str(Path(__file__).resolve().parent.parent / "scrapers_playwright")
+    )
     from playwright.sync_api import sync_playwright
 
     base_url = url.split("#", 1)[0]
@@ -199,7 +229,7 @@ def _download_echa_row_pdf(url: str, org_abbrev: str, title: str) -> str:
                 break
         if target_frame is None:
             browser.close()
-            raise RuntimeError("echa_frame_not_found")
+            raise RuntimeError("table_frame_not_found")
 
         with page.expect_download(timeout=45000) as dl_info:
             target_frame.locator(f"#{button_id}").click()
@@ -208,27 +238,33 @@ def _download_echa_row_pdf(url: str, org_abbrev: str, title: str) -> str:
         browser.close()
 
     if not filepath.exists() or filepath.stat().st_size == 0:
-        raise RuntimeError("echa_pdf_download_failed")
-    return str(filepath.relative_to(PDF_DIR.parent))
+        raise RuntimeError("table_pdf_download_failed")
+
+    from .config import PROJECT_ROOT
+
+    return str(filepath.relative_to(PROJECT_ROOT))
 
 
-def _is_taleo_url(url: str) -> bool:
-    """Check if a URL is a Taleo job detail page."""
+def _is_legacy_ats_url(url: str) -> bool:
+    """Check if a URL is a legacy ATS (Applicant Tracking System) job detail page.
+
+    These systems store content URL-encoded in JavaScript and use .ftl templates.
+    """
     lowered = url.lower()
     return "/careersection/" in lowered and "jobdetail.ftl" in lowered
 
 
-def _extract_taleo(html: str) -> str:
-    """Extract job description from a Taleo detail page.
+def _extract_legacy_ats_description(html: str) -> str:
+    """Extract job description from a legacy ATS detail page.
 
-    Taleo pages store content URL-encoded in JS. After decoding, the
-    job detail lives inside a div.singleview container.
+    These pages store content URL-encoded in JS. After decoding, the
+    job detail lives inside a div.singleview container or requisitionDescription.
     """
     decoded = unquote(html)
     soup = BeautifulSoup(decoded, "html.parser")
 
     # The singleview div contains the rendered job description for all
-    # Taleo template variants (MsoNormal-based and plain-span-based).
+    # legacy ATS template variants (MsoNormal-based and plain-span-based).
     container = soup.find("div", class_="singleview")
     if container:
         for tag in container.find_all(["script", "style"]):
@@ -238,7 +274,7 @@ def _extract_taleo(html: str) -> str:
         text = text.replace("\\:", ":").replace("\\;", ";")
         return text[:MAX_DESCRIPTION_CHARS]
 
-    # WHO/FAO/WIPO/IAEA template variant: content under requisitionDescription
+    # Alternative template variant: content under requisitionDescription
     # with MsoNormal paragraphs.
     req = soup.find(id=re.compile(r"requisitionDescription", re.I))
     if req:
@@ -258,7 +294,7 @@ def _extract_taleo(html: str) -> str:
             req_text = req_text.replace("\\:", ":").replace("\\;", ";")
             return req_text[:MAX_DESCRIPTION_CHARS]
 
-    # FAO and some Taleo variants embed description sections in one or more
+    # Some legacy ATS variants embed description sections in one or more
     # `!|!!*!...` payload fragments. We score each fragment and keep the best.
     marker = "!|!!*!"
     if marker in decoded:
@@ -292,11 +328,15 @@ def _extract_taleo(html: str) -> str:
             job_delim = re.search(r"!\|!\d{6,8}!\|!", part)
             if job_delim:
                 cut_points.append(job_delim.start())
-            fragment_html = part[:min(cut_points)] if cut_points else part
+            fragment_html = part[: min(cut_points)] if cut_points else part
 
-            fragment_text = BeautifulSoup(fragment_html, "html.parser").get_text("\n", strip=True)
+            fragment_text = BeautifulSoup(fragment_html, "html.parser").get_text(
+                "\n", strip=True
+            )
             fragment_text = re.sub(r"\n{3,}", "\n\n", fragment_text)
-            fragment_text = fragment_text.replace("\\:", ":").replace("\\;", ";").strip()
+            fragment_text = (
+                fragment_text.replace("\\:", ":").replace("\\;", ";").strip()
+            )
             if not fragment_text:
                 continue
 
@@ -325,23 +365,26 @@ def extract_html_description(url: str, use_playwright: bool = False) -> str:
     if use_playwright:
         return _extract_with_playwright(url)
 
-    satcen_desc = _extract_satcen_description(url)
-    if satcen_desc:
-        return satcen_desc
+    api_v2_desc = _extract_api_based_description_v2(url)
+    if api_v2_desc:
+        return api_v2_desc
 
-    workday_desc = _extract_workday_description(url)
-    if workday_desc:
-        return workday_desc
+    platform_a_desc = _extract_platform_a_description(url)
+    if platform_a_desc:
+        return platform_a_desc
 
-    imo_desc = _extract_imo_description(url)
-    if imo_desc:
-        return imo_desc
+    api_v1_desc = _extract_api_based_description_v1(url)
+    if api_v1_desc:
+        return api_v1_desc
 
     resp = _request(url)
+    nextjs_desc = _extract_nextjs_description_from_html(url, resp.text)
+    if nextjs_desc:
+        return nextjs_desc
 
-    # Taleo pages need special handling (content is URL-encoded in JS)
-    if _is_taleo_url(url):
-        result = _extract_taleo(resp.text)
+    # Legacy ATS pages need special handling (content is URL-encoded in JS)
+    if _is_legacy_ats_url(url):
+        result = _extract_legacy_ats_description(resp.text)
         if result:
             return result
 
@@ -362,15 +405,14 @@ def extract_html_description(url: str, use_playwright: bool = False) -> str:
 
 def _extract_with_playwright(url: str) -> str:
     """Extract description using Playwright for JS-heavy pages."""
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scrapers_playwright"))
+    sys.path.insert(
+        0, str(Path(__file__).resolve().parent.parent / "scrapers_playwright")
+    )
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        page = browser.new_page(
-            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
-        )
+        page = browser.new_page(user_agent=USER_AGENT)
         page.goto(url, wait_until="domcontentloaded", timeout=45000)
         try:
             page.wait_for_load_state("networkidle", timeout=12000)
@@ -421,6 +463,86 @@ def _parse_html(html: str) -> str:
     return best_text[:MAX_DESCRIPTION_CHARS]
 
 
+def _extract_nextjs_description_from_html(url: str, html: str) -> str:
+    """Extract job description from Next.js application payloads.
+
+    Some platforms embed JSON data in __NEXT_DATA__ script tags.
+    """
+    host = _url_host(url)
+    if not any(platform in host for platform in NEXTJS_PLATFORMS):
+        return ""
+
+    soup = BeautifulSoup(html, "html.parser")
+    data_tag = soup.find("script", id="__NEXT_DATA__")
+    if not data_tag or not data_tag.string:
+        return ""
+
+    try:
+        data = json.loads(data_tag.string)
+    except Exception:
+        return ""
+
+    key_markers = (
+        "description",
+        "jobdescription",
+        "job_description",
+        "responsibil",
+        "profile",
+        "qualification",
+        "requirement",
+        "offer",
+        "about",
+    )
+    noise_markers = (
+        "job list",
+        "please confirm this action",
+        "privacy policy",
+        "imprint",
+        "navigation",
+    )
+
+    best_text = ""
+    best_score = -1
+
+    def _walk(node: object, path: str = "") -> None:
+        nonlocal best_text, best_score
+        if isinstance(node, dict):
+            for k, v in node.items():
+                next_path = f"{path}.{k}".lower() if path else str(k).lower()
+                _walk(v, next_path)
+            return
+        if isinstance(node, list):
+            for item in node:
+                _walk(item, path)
+            return
+        if not isinstance(node, str):
+            return
+
+        candidate = _clean_text(
+            BeautifulSoup(node, "html.parser").get_text("\n", strip=True)
+        )
+        if len(candidate) < 180:
+            return
+
+        lowered = candidate.lower()
+        words = len(candidate.split())
+        score = words
+        if any(m in path for m in key_markers):
+            score += 250
+        if any(m in lowered for m in noise_markers):
+            score -= 500
+        if "job list" in lowered and "confirm" in lowered:
+            score -= 500
+        if score > best_score:
+            best_score = score
+            best_text = candidate
+
+    _walk(data)
+    if best_score < 80:
+        return ""
+    return best_text[:MAX_DESCRIPTION_CHARS]
+
+
 def _clean_text(text: str) -> str:
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = text.replace("\\:", ":").replace("\\;", ";")
@@ -436,10 +558,15 @@ def _clean_text(text: str) -> str:
     return "\n".join(filtered).strip()
 
 
-def _extract_workday_description(url: str) -> str:
+def _extract_platform_a_description(url: str) -> str:
+    """Extract job description from Platform A-style career sites.
+
+    These sites use a specific URL structure: /job/{slug}
+    and provide JSON APIs at /wday/cxs/{tenant}/{site}/job/{slug}
+    """
     parsed = urlparse(url)
     host = parsed.netloc.lower()
-    if "myworkdayjobs.com" not in host:
+    if not any(domain in host for domain in PLATFORM_A_DOMAINS):
         return ""
 
     path = parsed.path.rstrip("/")
@@ -457,7 +584,7 @@ def _extract_workday_description(url: str) -> str:
     site = parts[job_idx - 1]
     if re.fullmatch(r"[a-z]{2}-[a-z]{2}", site, flags=re.I) and job_idx >= 2:
         site = parts[job_idx - 2]
-    slug = "/".join(parts[job_idx + 1:])
+    slug = "/".join(parts[job_idx + 1 :])
     if not slug:
         return ""
 
@@ -489,9 +616,14 @@ def _extract_workday_description(url: str) -> str:
     return text[:MAX_DESCRIPTION_CHARS]
 
 
-def _extract_imo_description(url: str) -> str:
+def _extract_api_based_description_v1(url: str) -> str:
+    """Extract job description from API-based recruitment systems (variant 1).
+
+    These systems expose a JSON API with job listings that can be matched by ID.
+    """
     parsed = urlparse(url)
-    if parsed.netloc.lower() != "recruit.imo.org":
+    host = parsed.netloc.lower()
+    if not any(domain in host for domain in API_BASED_V1_DOMAINS):
         return ""
     match = re.search(r"/vacancies/(\d+)", parsed.path)
     if not match:
@@ -514,7 +646,14 @@ def _extract_imo_description(url: str) -> str:
 
     if not isinstance(data, list):
         return ""
-    match_item = next((row for row in data if isinstance(row, dict) and row.get("jobVacancyId") == job_id), None)
+    match_item = next(
+        (
+            row
+            for row in data
+            if isinstance(row, dict) and row.get("jobVacancyId") == job_id
+        ),
+        None,
+    )
     if not match_item:
         return ""
 
@@ -532,9 +671,14 @@ def _extract_imo_description(url: str) -> str:
     return text[:MAX_DESCRIPTION_CHARS]
 
 
-def _extract_satcen_description(url: str) -> str:
+def _extract_api_based_description_v2(url: str) -> str:
+    """Extract job description from API-based recruitment systems (variant 2).
+
+    These systems use RESTful APIs with UUID-based vacancy endpoints.
+    """
     parsed = urlparse(url)
-    if parsed.netloc.lower() != "recruitment.satcen.europa.eu":
+    host = parsed.netloc.lower()
+    if not any(domain in host for domain in API_BASED_V2_DOMAINS):
         return ""
     match = re.search(r"/vacancy/([0-9a-f]{16,32})", parsed.path, flags=re.I)
     if not match:
@@ -558,11 +702,12 @@ def _extract_satcen_description(url: str) -> str:
     if not isinstance(data, dict):
         return ""
 
-    text = _satcen_payload_to_text(data)
+    text = _api_payload_to_text(data)
     return text[:MAX_DESCRIPTION_CHARS]
 
 
-def _satcen_payload_to_text(data: dict) -> str:
+def _api_payload_to_text(data: dict) -> str:
+    """Convert API response payload with structured fields to text."""
     sections = []
     section_fields = (
         ("Description", "description"),
@@ -575,7 +720,9 @@ def _satcen_payload_to_text(data: dict) -> str:
         raw = data.get(key, "")
         if not isinstance(raw, str) or not raw.strip():
             continue
-        section_text = _clean_text(BeautifulSoup(raw, "html.parser").get_text("\n", strip=True))
+        section_text = _clean_text(
+            BeautifulSoup(raw, "html.parser").get_text("\n", strip=True)
+        )
         if section_text:
             sections.append(f"{heading}\n{section_text}")
 
@@ -614,7 +761,11 @@ def _extract_pdf_candidates(html: str, page_url: str) -> list[dict[str, str]]:
             continue
         text = link.get_text(" ", strip=True)
         lowered = (text + " " + href).lower()
-        if ".pdf" not in href.lower() and "pdf" not in text.lower() and "download pdf" not in lowered:
+        if (
+            ".pdf" not in href.lower()
+            and "pdf" not in text.lower()
+            and "download pdf" not in lowered
+        ):
             continue
         full = urljoin(page_url, href)
         if full in seen:
@@ -626,10 +777,14 @@ def _extract_pdf_candidates(html: str, page_url: str) -> list[dict[str, str]]:
     # Some sites (e.g. EBA careers) embed vacancy PDF URLs in JSON blobs
     # instead of rendering explicit anchor tags.
     normalized_html = html.replace("\\/", "/")
-    raw_urls = re.findall(r'https?://[^\s"\'<>]+?\.pdf(?:\?[^\s"\'<>]*)?', normalized_html, flags=re.I)
+    raw_urls = re.findall(
+        r'https?://[^\s"\'<>]+?\.pdf(?:\?[^\s"\'<>]*)?', normalized_html, flags=re.I
+    )
     raw_urls += [
         urljoin(page_url, p)
-        for p in re.findall(r'/[^\s"\'<>]+?\.pdf(?:\?[^\s"\'<>]*)?', normalized_html, flags=re.I)
+        for p in re.findall(
+            r'/[^\s"\'<>]+?\.pdf(?:\?[^\s"\'<>]*)?', normalized_html, flags=re.I
+        )
     ]
     for full in raw_urls:
         if full in seen:
@@ -672,7 +827,9 @@ def _score_pdf_candidate(candidate: dict[str, str], title: str) -> int:
     return score
 
 
-def _select_embedded_pdf_link(html: str, page_url: str, title: str, org_abbrev: str) -> str:
+def _select_embedded_pdf_link(
+    html: str, page_url: str, title: str, org_abbrev: str
+) -> str:
     candidates = _extract_pdf_candidates(html, page_url)
     if not candidates:
         return ""
@@ -701,15 +858,11 @@ def _is_short_or_placeholder(text: str) -> bool:
 
 
 def _should_try_playwright(url: str, text: str, html: str) -> bool:
+    """Determine if a URL requires JavaScript rendering (Playwright)."""
     host = _url_host(url)
     if any(marker in text.lower() for marker in JS_PLACEHOLDER_MARKERS):
         return True
-    if (
-        "oraclecloud" in host
-        or "onlyfy.jobs" in host
-        or "europol.europa.eu" in host
-        or host in {"vacancies.eda.europa.eu", "www.ombudsman.europa.eu"}
-    ):
+    if "oraclecloud" in host or any(domain in host for domain in PLAYWRIGHT_DOMAINS):
         return True
     if "enable javascript" in html.lower():
         return True
@@ -732,8 +885,13 @@ def classify_fetch_error(exc: Exception) -> tuple[str, str]:
     return "error", "fetch_error"
 
 
-def fetch_job_content(url: str, org_abbrev: str, title: str,
-                      use_playwright: bool = False) -> dict:
+def fetch_job_content(
+    url: str,
+    org_abbrev: str,
+    title: str,
+    use_playwright: bool = False,
+    run_id: str = "default",
+) -> dict:
     """Fetch content for a single job URL.
 
     Returns dict with keys: content_type, description, pdf_path.
@@ -748,21 +906,21 @@ def fetch_job_content(url: str, org_abbrev: str, title: str,
             "fetch_method": "none",
         }
 
-    if _is_echa_row_url(url):
-        pdf_path = _download_echa_row_pdf(url, org_abbrev, title)
+    if _is_table_row_url(url):
+        pdf_path = _download_table_row_pdf(url, org_abbrev, title, run_id)
         return {
             "content_type": "pdf",
             "description": "",
             "pdf_path": pdf_path,
             "enrich_status": "pdf",
-            "status_reason": "echa_download_button",
+            "status_reason": "table_download_button",
             "fetch_method": "playwright",
         }
 
     content_type = detect_content_type(url)
 
     if content_type == "pdf":
-        pdf_path = download_pdf(url, org_abbrev, title)
+        pdf_path = download_pdf(url, org_abbrev, title, run_id)
         return {
             "content_type": "pdf",
             "description": "",
@@ -773,10 +931,12 @@ def fetch_job_content(url: str, org_abbrev: str, title: str,
         }
 
     resp = _request(url)
-    pdf_link = _select_embedded_pdf_link(resp.text, url, title=title, org_abbrev=org_abbrev)
+    pdf_link = _select_embedded_pdf_link(
+        resp.text, url, title=title, org_abbrev=org_abbrev
+    )
 
     if org_abbrev.upper() in PREFER_EMBEDDED_PDF_ORGS and pdf_link:
-        pdf_path = download_pdf(pdf_link, org_abbrev, title)
+        pdf_path = download_pdf(pdf_link, org_abbrev, title, run_id)
         return {
             "content_type": "pdf",
             "description": "",
@@ -788,7 +948,7 @@ def fetch_job_content(url: str, org_abbrev: str, title: str,
 
     description = extract_html_description(url, use_playwright=use_playwright)
     if _is_short_or_placeholder(description) and pdf_link:
-        pdf_path = download_pdf(pdf_link, org_abbrev, title)
+        pdf_path = download_pdf(pdf_link, org_abbrev, title, run_id)
         return {
             "content_type": "pdf",
             "description": "",
@@ -799,7 +959,11 @@ def fetch_job_content(url: str, org_abbrev: str, title: str,
         }
 
     if _is_short_or_placeholder(description):
-        reason = "js_required" if any(m in description.lower() for m in JS_PLACEHOLDER_MARKERS) else "short_description"
+        reason = (
+            "js_required"
+            if any(m in description.lower() for m in JS_PLACEHOLDER_MARKERS)
+            else "short_description"
+        )
         status = "js_required" if reason == "js_required" else "short_content"
         return {
             "content_type": "html",

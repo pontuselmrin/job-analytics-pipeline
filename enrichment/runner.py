@@ -15,9 +15,16 @@ from pathlib import Path
 from typing import Callable
 import threading
 
-from .config import LOGS_DIR, PLAYWRIGHT_ORGS, PROFILES_DIR, REQUEST_DELAY
+from .config import PLAYWRIGHT_ORGS, REQUEST_DELAY, get_logs_path, get_profile_dir
 from .fetcher import classify_fetch_error, extract_html_description, fetch_job_content
-from .schema import enrich_job, is_enriched, load_output, mark_enriched, mark_error, save_output
+from .schema import (
+    enrich_job,
+    is_enriched,
+    load_output,
+    mark_enriched,
+    mark_error,
+    save_output,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SCRAPERS_DIR = PROJECT_ROOT / "scrapers"
@@ -62,9 +69,10 @@ class RunnerConfig:
     run_id: str
     batch_id: str = ""
     verbose: bool = True
+    live_events: bool = False
     ndjson_path: Path | None = None
     profile: bool = False
-    profile_dir: Path = PROFILES_DIR
+    profile_dir: Path | None = None
 
 
 class EventLogger:
@@ -93,6 +101,9 @@ class EventLogger:
             with self._lock:
                 self._fh.write(json.dumps(payload, ensure_ascii=False) + "\n")
                 self._fh.flush()
+        if self.cfg.live_events:
+            with self._lock:
+                print(json.dumps(payload, ensure_ascii=False), flush=True)
 
     def info(self, msg: str):
         if self.cfg.verbose:
@@ -105,8 +116,8 @@ def default_run_id(prefix: str = "run") -> str:
 
 
 def default_ndjson_path(run_id: str) -> Path:
-    LOGS_DIR.mkdir(parents=True, exist_ok=True)
-    return LOGS_DIR / f"{run_id}.ndjson"
+    """Get the default ndjson log path for a run."""
+    return get_logs_path(run_id)
 
 
 def _load_scraper_module(filepath: Path):
@@ -119,7 +130,12 @@ def _load_scraper_module(filepath: Path):
     return module
 
 
-def run_scraper_for_org(scraper_path: Path, org_abbrev: str, org_name: str, logger: EventLogger) -> list[dict]:
+def run_scraper_for_org(
+    scraper_path: Path, org_abbrev: str, org_name: str, logger: EventLogger
+) -> list[dict]:
+    logger.info(
+        f"[{org_abbrev}] scraper_start file={scraper_path.relative_to(PROJECT_ROOT)}"
+    )
     logger.emit(
         "org_start",
         org_abbrev=org_abbrev,
@@ -130,7 +146,13 @@ def run_scraper_for_org(scraper_path: Path, org_abbrev: str, org_name: str, logg
     mod = _load_scraper_module(scraper_path)
     jobs = mod.scrape()
     elapsed = round(time.perf_counter() - started, 3)
-    logger.emit("scraper_done", org_abbrev=org_abbrev, org_name=org_name, job_count=len(jobs), duration_seconds=elapsed)
+    logger.emit(
+        "scraper_done",
+        org_abbrev=org_abbrev,
+        org_name=org_name,
+        job_count=len(jobs),
+        duration_seconds=elapsed,
+    )
     logger.info(f"[{org_abbrev}] scraper_done jobs={len(jobs)} t={elapsed:.3f}s")
     return jobs
 
@@ -144,7 +166,9 @@ def _profile_call(enabled: bool, profile_out: Path | None, fn: Callable):
     try:
         from pyinstrument import Profiler
     except Exception as exc:  # noqa: BLE001
-        raise RuntimeError("pyinstrument is not installed. Run: uv add pyinstrument") from exc
+        raise RuntimeError(
+            "pyinstrument is not installed. Run: uv add pyinstrument"
+        ) from exc
 
     profile_out.parent.mkdir(parents=True, exist_ok=True)
     profiler = Profiler()
@@ -203,7 +227,9 @@ def _fetch_one(
             status_reason=result["status_reason"],
             error="",
         )
-        logger.info(f"[{org_abbrev}] [{idx}/{total}] DONE status=no_detail_url words=0 t=0.000s")
+        logger.info(
+            f"[{org_abbrev}] [{idx}/{total}] DONE status=no_detail_url words=0 t=0.000s"
+        )
         return result
 
     started = time.perf_counter()
@@ -214,6 +240,7 @@ def _fetch_one(
                 org_abbrev=org_abbrev,
                 title=title or f"job-{idx}",
                 use_playwright=is_playwright,
+                run_id=logger.cfg.run_id,
             )
         fetch_seconds = round(time.perf_counter() - started, 3)
         out = {
@@ -238,7 +265,7 @@ def _fetch_one(
         )
         logger.info(
             f"[{org_abbrev}] [{idx}/{total}] DONE "
-            f"status={out.get('enrich_status','')} type={out.get('content_type','')} "
+            f"status={out.get('enrich_status', '')} type={out.get('content_type', '')} "
             f"words={words} t={fetch_seconds:.3f}s"
         )
         return out
@@ -311,7 +338,9 @@ def _fetch_one(
             status_reason=reason,
             error=str(exc),
         )
-        logger.info(f"[{org_abbrev}] [{idx}/{total}] ERROR status={status}:{reason} t={fetch_seconds:.3f}s err={exc}")
+        logger.info(
+            f"[{org_abbrev}] [{idx}/{total}] ERROR status={status}:{reason} t={fetch_seconds:.3f}s err={exc}"
+        )
         return out
 
 
@@ -328,6 +357,24 @@ def _rate_limited_skip_result() -> dict:
     }
 
 
+def _scraper_detail_result(raw_job: dict, org_abbrev: str) -> dict | None:
+    if (org_abbrev or "").upper() != "EIB":
+        return None
+    description = (raw_job.get("description") or "").strip()
+    if _word_count(description) < 50 or len(description) < 120:
+        return None
+    return {
+        "content_type": "html",
+        "description": description,
+        "pdf_path": (raw_job.get("pdf_path") or "").strip(),
+        "enrich_status": "ok",
+        "status_reason": "scraper_detail",
+        "fetch_method": "scraper",
+        "fetch_seconds": 0.0,
+        "error": "",
+    }
+
+
 def enrich_org_via_runner(
     *,
     org_abbrev: str,
@@ -338,7 +385,6 @@ def enrich_org_via_runner(
     force: bool,
     logger: EventLogger,
     profile: bool = False,
-    profile_dir: Path = PROFILES_DIR,
     max_jobs: int | None = None,
     job_timeout_seconds: float = 30.0,
 ) -> dict:
@@ -381,7 +427,7 @@ def enrich_org_via_runner(
                 )
                 logger.info(
                     f"[{org_abbrev}] [{i}/{len(selected)}] DONE status=cached "
-                    f"words={_word_count(cached_job.get('description',''))} t=0.000s"
+                    f"words={_word_count(cached_job.get('description', ''))} t=0.000s"
                 )
                 continue
 
@@ -406,37 +452,61 @@ def enrich_org_via_runner(
                     "t=0.000s"
                 )
             else:
-                fetch_res = _fetch_one(
-                    org_abbrev=org_abbrev,
-                    org_name=org_name,
-                    idx=i,
-                    total=len(selected),
-                    title=(raw_job.get("title") or "").strip(),
-                    url=url,
-                    is_playwright=pw_detail,
-                    logger=logger,
-                    job_timeout_seconds=job_timeout_seconds,
-                )
-                if (
-                    fetch_res.get("enrich_status") == "blocked_source"
-                    and fetch_res.get("status_reason") == "http_429"
-                ):
-                    consecutive_429 += 1
-                    if consecutive_429 >= ORG_429_BREAKER_THRESHOLD:
-                        breaker_open = True
-                        logger.emit(
-                            "org_rate_limited",
-                            org_abbrev=org_abbrev,
-                            org_name=org_name,
-                            consecutive_429=consecutive_429,
-                            threshold=ORG_429_BREAKER_THRESHOLD,
-                        )
-                        logger.info(
-                            f"[{org_abbrev}] rate_limit_breaker_open "
-                            f"after {consecutive_429} consecutive http_429 errors"
-                        )
-                else:
+                fetch_res = _scraper_detail_result(raw_job, org_abbrev)
+                if fetch_res:
+                    words = _word_count(fetch_res.get("description", ""))
+                    logger.emit(
+                        "job_result",
+                        org_abbrev=org_abbrev,
+                        org_name=org_name,
+                        job_index=i,
+                        job_title=(raw_job.get("title") or "").strip(),
+                        job_url=url,
+                        duration_seconds=0.0,
+                        enrich_status=fetch_res.get("enrich_status", ""),
+                        content_type=fetch_res.get("content_type", ""),
+                        word_count=words,
+                        status_reason=fetch_res.get("status_reason", ""),
+                        error="",
+                    )
+                    logger.info(
+                        f"[{org_abbrev}] [{i}/{len(selected)}] DONE "
+                        "status=ok type=html words="
+                        f"{words} t=0.000s [scraper_detail]"
+                    )
                     consecutive_429 = 0
+                else:
+                    fetch_res = _fetch_one(
+                        org_abbrev=org_abbrev,
+                        org_name=org_name,
+                        idx=i,
+                        total=len(selected),
+                        title=(raw_job.get("title") or "").strip(),
+                        url=url,
+                        is_playwright=pw_detail,
+                        logger=logger,
+                        job_timeout_seconds=job_timeout_seconds,
+                    )
+                    if (
+                        fetch_res.get("enrich_status") == "blocked_source"
+                        and fetch_res.get("status_reason") == "http_429"
+                    ):
+                        consecutive_429 += 1
+                        if consecutive_429 >= ORG_429_BREAKER_THRESHOLD:
+                            breaker_open = True
+                            logger.emit(
+                                "org_rate_limited",
+                                org_abbrev=org_abbrev,
+                                org_name=org_name,
+                                consecutive_429=consecutive_429,
+                                threshold=ORG_429_BREAKER_THRESHOLD,
+                            )
+                            logger.info(
+                                f"[{org_abbrev}] rate_limit_breaker_open "
+                                f"after {consecutive_429} consecutive http_429 errors"
+                            )
+                    else:
+                        consecutive_429 = 0
 
             job = enrich_job(raw_job, org_name, org_abbrev)
             if fetch_res.get("error"):
@@ -464,8 +534,16 @@ def enrich_org_via_runner(
                 time.sleep(REQUEST_DELAY)
 
         output_path = save_output(org_name, org_abbrev, enriched_jobs)
-        logger.emit("org_done", org_abbrev=org_abbrev, org_name=org_name, job_count=len(enriched_jobs), output_path=str(output_path))
-        logger.info(f"[{org_abbrev}] org_done jobs={len(enriched_jobs)} output={output_path}")
+        logger.emit(
+            "org_done",
+            org_abbrev=org_abbrev,
+            org_name=org_name,
+            job_count=len(enriched_jobs),
+            output_path=str(output_path),
+        )
+        logger.info(
+            f"[{org_abbrev}] org_done jobs={len(enriched_jobs)} output={output_path}"
+        )
         return {
             "org_name": org_name,
             "org_abbrev": org_abbrev,
@@ -473,7 +551,9 @@ def enrich_org_via_runner(
             "output_path": str(output_path),
         }
 
-    profile_out = profile_dir / logger.cfg.run_id / f"{org_abbrev}.html" if profile else None
+    profile_out = (
+        get_profile_dir(logger.cfg.run_id) / f"{org_abbrev}.html" if profile else None
+    )
     return _profile_call(profile, profile_out, _run)
 
 
@@ -485,7 +565,6 @@ def collect_postings_org_via_runner(
     is_playwright_scraper: bool,
     logger: EventLogger,
     profile: bool = False,
-    profile_dir: Path = PROFILES_DIR,
     max_jobs: int | None = None,
     job_timeout_seconds: float = 30.0,
 ) -> dict:
@@ -503,7 +582,13 @@ def collect_postings_org_via_runner(
             jobs = run_scraper_for_org(scraper_path, org_abbrev, org_name, logger)
         except Exception as exc:  # noqa: BLE001
             org_block["scraper_error"] = str(exc)
-            logger.emit("org_done", org_abbrev=org_abbrev, org_name=org_name, scraper_error=str(exc), job_count=0)
+            logger.emit(
+                "org_done",
+                org_abbrev=org_abbrev,
+                org_name=org_name,
+                scraper_error=str(exc),
+                job_count=0,
+            )
             logger.info(f"[{org_abbrev}] scraper_error={exc}")
             return org_block
 
@@ -534,37 +619,61 @@ def collect_postings_org_via_runner(
                     "t=0.000s"
                 )
             else:
-                fetch_res = _fetch_one(
-                    org_abbrev=org_abbrev,
-                    org_name=org_name,
-                    idx=idx,
-                    total=len(selected),
-                    title=title,
-                    url=url,
-                    is_playwright=is_playwright_scraper,
-                    logger=logger,
-                    job_timeout_seconds=job_timeout_seconds,
-                )
-                if (
-                    fetch_res.get("enrich_status") == "blocked_source"
-                    and fetch_res.get("status_reason") == "http_429"
-                ):
-                    consecutive_429 += 1
-                    if consecutive_429 >= ORG_429_BREAKER_THRESHOLD:
-                        breaker_open = True
-                        logger.emit(
-                            "org_rate_limited",
-                            org_abbrev=org_abbrev,
-                            org_name=org_name,
-                            consecutive_429=consecutive_429,
-                            threshold=ORG_429_BREAKER_THRESHOLD,
-                        )
-                        logger.info(
-                            f"[{org_abbrev}] rate_limit_breaker_open "
-                            f"after {consecutive_429} consecutive http_429 errors"
-                        )
-                else:
+                fetch_res = _scraper_detail_result(job, org_abbrev)
+                if fetch_res:
+                    words = _word_count(fetch_res.get("description", ""))
+                    logger.emit(
+                        "job_result",
+                        org_abbrev=org_abbrev,
+                        org_name=org_name,
+                        job_index=idx,
+                        job_title=title,
+                        job_url=url,
+                        duration_seconds=0.0,
+                        enrich_status=fetch_res.get("enrich_status", ""),
+                        content_type=fetch_res.get("content_type", ""),
+                        word_count=words,
+                        status_reason=fetch_res.get("status_reason", ""),
+                        error="",
+                    )
+                    logger.info(
+                        f"[{org_abbrev}] [{idx}/{len(selected)}] DONE "
+                        "status=ok type=html words="
+                        f"{words} t=0.000s [scraper_detail]"
+                    )
                     consecutive_429 = 0
+                else:
+                    fetch_res = _fetch_one(
+                        org_abbrev=org_abbrev,
+                        org_name=org_name,
+                        idx=idx,
+                        total=len(selected),
+                        title=title,
+                        url=url,
+                        is_playwright=is_playwright_scraper,
+                        logger=logger,
+                        job_timeout_seconds=job_timeout_seconds,
+                    )
+                    if (
+                        fetch_res.get("enrich_status") == "blocked_source"
+                        and fetch_res.get("status_reason") == "http_429"
+                    ):
+                        consecutive_429 += 1
+                        if consecutive_429 >= ORG_429_BREAKER_THRESHOLD:
+                            breaker_open = True
+                            logger.emit(
+                                "org_rate_limited",
+                                org_abbrev=org_abbrev,
+                                org_name=org_name,
+                                consecutive_429=consecutive_429,
+                                threshold=ORG_429_BREAKER_THRESHOLD,
+                            )
+                            logger.info(
+                                f"[{org_abbrev}] rate_limit_breaker_open "
+                                f"after {consecutive_429} consecutive http_429 errors"
+                            )
+                    else:
+                        consecutive_429 = 0
 
             org_block["jobs"].append(
                 {
@@ -574,6 +683,7 @@ def collect_postings_org_via_runner(
                     "content_type": fetch_res.get("content_type", ""),
                     "enrich_status": fetch_res.get("enrich_status", ""),
                     "status_reason": fetch_res.get("status_reason", ""),
+                    "fetch_method": fetch_res.get("fetch_method", ""),
                     "description": fetch_res.get("description", ""),
                     "pdf_path": fetch_res.get("pdf_path", ""),
                     "fetch_seconds": fetch_res.get("fetch_seconds", 0.0),
@@ -581,8 +691,16 @@ def collect_postings_org_via_runner(
                 }
             )
 
-        logger.emit("org_done", org_abbrev=org_abbrev, org_name=org_name, job_count=len(org_block["jobs"]), scraper_error="")
+        logger.emit(
+            "org_done",
+            org_abbrev=org_abbrev,
+            org_name=org_name,
+            job_count=len(org_block["jobs"]),
+            scraper_error="",
+        )
         return org_block
 
-    profile_out = profile_dir / logger.cfg.run_id / f"{org_abbrev}.html" if profile else None
+    profile_out = (
+        get_profile_dir(logger.cfg.run_id) / f"{org_abbrev}.html" if profile else None
+    )
     return _profile_call(profile, profile_out, _run)
