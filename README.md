@@ -1,4 +1,4 @@
-# Job Analytics Pipeline
+# job-analytics-pipeline
 
 ![tests](https://github.com/pontuselmrin/job-analytics-pipeline/actions/workflows/tests.yml/badge.svg)
 ![lint](https://github.com/pontuselmrin/job-analytics-pipeline/actions/workflows/lint.yml/badge.svg)
@@ -49,6 +49,9 @@ uv run python -m ops.run_orgs --org <orgname1> --org <orgname2>
 See `scrapers/scrape_example.py` (requests) or `scrapers_playwright/scrape_example_pw.py` (Playwright) for templates.
 
 Each scraper implements a `scrape()` function that returns a list of job listing dicts.
+
+## AI usage disclaimer
+Large chunks of the enrichment and test code was generated and iterated upon using coding assistants.
 
 
 ## License
