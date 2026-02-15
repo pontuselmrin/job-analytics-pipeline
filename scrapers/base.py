@@ -1,34 +1,16 @@
 """Shared utilities for all scrapers."""
-import re
+
 import time
 from email.utils import parsedate_to_datetime
 
 import requests
 
-DEFAULT_HEADERS = {
-    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
-}
-
-WORKDAY_HEADERS = {
-    "Accept": "application/json",
-    "Content-Type": "application/json",
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-}
-
-TALEO_HEADERS = {
-    "Accept": "application/json, text/javascript, */*; q=0.01",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Content-Type": "application/json",
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
-    "X-Requested-With": "XMLHttpRequest",
-    "tz": "GMT+01:00",
-    "tzname": "Europe/Berlin",
-}
+from config import DEFAULT_HEADERS, API_JSON_HEADERS, API_EXTENDED_HEADERS
 
 
 def _retry_delay_seconds(exc: requests.RequestException, attempt: int) -> float:
     """Compute retry delay, honoring Retry-After for 429 responses."""
-    default = float(2 ** attempt)
+    default = float(2**attempt)
     resp = getattr(exc, "response", None)
     if resp is None or getattr(resp, "status_code", None) != 429:
         return default
@@ -90,16 +72,18 @@ def extract_links(soup, href_pattern, base_url, min_title_len=5, exclude_pattern
             continue
 
         seen_urls.add(href)
-        jobs.append({
-            "title": title,
-            "url": normalize_url(href, base_url),
-        })
+        jobs.append(
+            {
+                "title": title,
+                "url": normalize_url(href, base_url),
+            }
+        )
 
     return jobs
 
 
-def scrape_workday(base_url, api_url):
-    """Full Workday pagination loop. Returns list of {"title", "url", "location"}."""
+def scrape_api_json_paginated(base_url, api_url):
+    """Generic JSON API pagination loop. Returns list of {"title", "url", "location"}."""
     parts = api_url.rstrip("/").split("/")
     site = parts[-2] if len(parts) >= 2 else "External"
     site_prefix = f"/{site}"
@@ -115,7 +99,7 @@ def scrape_workday(base_url, api_url):
             "offset": offset,
             "searchText": "",
         }
-        resp = fetch(api_url, method="POST", headers=WORKDAY_HEADERS, json=payload)
+        resp = fetch(api_url, method="POST", headers=API_JSON_HEADERS, json=payload)
         try:
             data = resp.json()
         except Exception:
@@ -137,13 +121,15 @@ def scrape_workday(base_url, api_url):
                 full_path = external_path
             else:
                 full_path = site_prefix + external_path
-            jobs.append({
-                "title": job.get("title", ""),
-                # Most Workday sites require /<site>/job/... (e.g. /External/job/...)
-                # while API externalPath commonly starts at /job/...
-                "url": base_url + full_path,
-                "location": job.get("locationsText", ""),
-            })
+            jobs.append(
+                {
+                    "title": job.get("title", ""),
+                    # Some sites require /<site>/job/... (e.g. /External/job/...)
+                    # while API externalPath commonly starts at /job/...
+                    "url": base_url + full_path,
+                    "location": job.get("locationsText", ""),
+                }
+            )
 
         offset += limit
         if offset >= data.get("total", 0):
@@ -152,9 +138,16 @@ def scrape_workday(base_url, api_url):
     return jobs
 
 
-def scrape_taleo(base_url, portal_id, section, column_map, strip_columns=None,
-                 filters=None, deduplicate=False):
-    """Full Taleo pagination loop.
+def scrape_api_advanced_paginated(
+    base_url,
+    portal_id,
+    section,
+    column_map,
+    strip_columns=None,
+    filters=None,
+    deduplicate=False,
+):
+    """Generic API pagination with advanced filtering and column mapping.
 
     column_map: dict mapping column index to field name, e.g. {0: "title", 1: "location"}
     strip_columns: set of column indices whose values should have []" stripped (locations)
@@ -163,7 +156,7 @@ def scrape_taleo(base_url, portal_id, section, column_map, strip_columns=None,
     """
     api_url = f"{base_url}/careersection/rest/jobboard/searchjobs"
     headers = {
-        **TALEO_HEADERS,
+        **API_EXTENDED_HEADERS,
         "Origin": base_url,
         "Referer": f"{base_url}/careersection/{section}/jobsearch.ftl?lang=en",
     }
@@ -190,7 +183,9 @@ def scrape_taleo(base_url, portal_id, section, column_map, strip_columns=None,
                 "valid": True,
             },
             "filterSelectionParam": {"searchFilterSelections": filter_selections},
-            "advancedSearchFiltersSelectionParam": {"searchFilterSelections": filter_selections},
+            "advancedSearchFiltersSelectionParam": {
+                "searchFilterSelections": filter_selections
+            },
             "pageNo": page,
         }
 
@@ -230,7 +225,9 @@ def scrape_taleo(base_url, portal_id, section, column_map, strip_columns=None,
             if "job_number" not in entry:
                 entry["job_number"] = job_id
 
-            entry["url"] = f"{base_url}/careersection/{section}/jobdetail.ftl?job={job_id}"
+            entry["url"] = (
+                f"{base_url}/careersection/{section}/jobdetail.ftl?job={job_id}"
+            )
             all_jobs.append(entry)
 
         if deduplicate and new_jobs_count == 0:
