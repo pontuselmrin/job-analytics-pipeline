@@ -1,0 +1,163 @@
+"""
+Example test configuration with organization-specific data.
+
+Copy this file to test_config_local.py and populate with real organization data
+for running tests against actual scrapers.
+
+This allows the repository to be public while keeping sensitive organization
+details private.
+"""
+
+# Organization test data
+# Format: {"abbrev": "ORG_CODE", "name": "Organization Full Name", "domain": "org.example.com"}
+ORGS = {
+    # European organizations example
+    "council": {
+        "abbrev": "COUNCIL",
+        "name": "Example Council",
+        "domain": "council.example.com",
+        "urls": {
+            "vacancy_detail": "https://council.example.com/en/careers/vacancies/2025-example-vacancy/",
+            "other_site_1": "https://other1.example.com/en/job-opportunities/open-vacancies",
+            "other_site_2": "https://other2.example.com/filter-page/vacancies_en",
+        }
+    },
+    "agency_a": {
+        "abbrev": "AGENCYA",
+        "name": "Example Agency A",
+        "domain": "agencya.example.eu",
+        "urls": {
+            "language_switcher": "/about/jobs_it",
+            "call_detail_1": "/calls/2026/sne202601_en",
+            "call_detail_2": "/calls/2026/ca202601_en",
+        }
+    },
+    "agency_b": {
+        "abbrev": "AGENCYB",
+        "name": "Example Agency B",
+        "domain": "vacancies.agencyb.example.eu",
+        "urls": {
+            "job_detail": "/job/senior-policy-officer",
+            "sitemap": "/sitemap.xml",
+        }
+    },
+    "agency_c": {
+        "abbrev": "AGENCYC",
+        "name": "Example Agency C",
+        "domain": "agencyc.example.org",
+        "urls": {
+            "show_job": "/wd/plsql/wd_portal.show_job?p_web_site_id=564&p_web_page_id=603617",
+            "apply_form": "/wd/plsql/wd_portal_cand.form?p_web_site_id=564&p_web_page_id=603617",
+        }
+    },
+    "agency_d": {
+        "abbrev": "AGENCYD",
+        "name": "Example Agency D",
+        "domain": "agencyd.example.eu",
+        "alt_domain": "agencyd.gestmax.eu",
+        "urls": {
+            "search": "/search",
+            "job_detail_1": "/808/1/it-specialists-ad6/en_US",
+            "job_detail_2": "/807/1/accounting-and-budget-officer-ad5/en_US",
+        }
+    },
+    "agency_e": {
+        "abbrev": "AGENCYE",
+        "name": "Example Agency E",
+        "domain": "agencye.example.eu",
+        "urls": {
+            "recruitment_detail": "/about/recruitment/agencye-2026-ta-01-ad10",
+            "recruitment_main": "/about/recruitment",
+            "recruitment_closed": "/about/recruitment/closed",
+        }
+    },
+    "agency_f": {
+        "abbrev": "AGENCYF",
+        "name": "Example Agency F",
+        "domain": "agencyf.example.eu",
+        "urls": {
+            "job_detail": "/en/content/public-call",
+            "other_headline": "/en/content/other-page",
+            "table_job": "/en/content/legal-counsel",
+        }
+    },
+    "agency_g": {
+        "abbrev": "AGENCYG",
+        "name": "Example Agency G",
+        "domain": "agencyg.example.org",
+        "urls": {
+            "job_detail": "/job/abc123",
+            "ajax_list": "/candidate/job/ajax_list?display_length=10&page=2",
+        }
+    },
+    "bank_a": {
+        "abbrev": "BANKA",
+        "name": "Example Bank A",
+        "domain": "careers.example-reachmee.com",
+        "alt_domain": "banka.example.int",
+        "urls": {
+            "job_detail": "/jobs/123?job_id=123",
+            "get_notified": "/careers/get-notified",
+        }
+    },
+    "intl_org_a": {
+        "abbrev": "INTLORGA",
+        "name": "International Organization A",
+        "domain": "jobs.intlorga.example.org",
+        "urls": {
+            "job_detail": "/careersection/external/jobdetail.ftl?job=2600348",
+        }
+    },
+    "bank_b": {
+        "abbrev": "BANKB",
+        "name": "Example Bank B",
+        "domain": "erecruitment.bankb.example.org",
+        "urls": {
+            "job_detail": "/#job-id-1",
+        }
+    },
+    "agency_h": {
+        "abbrev": "AGENCYH",
+        "name": "Example Agency H",
+        "domain": "agencyh.example.eu",
+        "urls": {
+            "job_detail": "/job",
+            "policy_pdf": "/system/files/2026-02/01-agencyh-data-protection-notice.pdf",
+            "vacancy_notice_pdf": "/system/files/2026-02/vn-08-2026-agencyh-legal-and-policy-officer_en.pdf",
+        }
+    },
+    "agency_i": {
+        "abbrev": "AGENCYI",
+        "name": "Example Agency I",
+        "domain": "careers.agencyi.example.eu",
+        "alt_domain": "agencyi.example.eu",
+        "urls": {
+            "job_detail": "/en/our-vacancies/senior-expert",
+            "candidates_manual": "/Online-Application-Manual-for-Candidates.pdf",
+            "vacancy_notice": "/assets/offers/22_RR_EU_Vacancy_Notice.pdf?276029",
+        }
+    },
+    "agency_j": {
+        "abbrev": "AGENCYJ",
+        "name": "Example Agency J",
+        "domain": "jobs.agencyj.example.eu",
+        "urls": {
+            "job_list": "/psp/pshrrcr/EMPLOYEE/HRMS/c/HRS_HRAM.HRS_APP_SCHJOB.GBL?FOCUS=Applicant&languageCd=ENG",
+            "job_row": "/psp/pshrrcr/EMPLOYEE/HRMS/c/HRS_HRAM.HRS_APP_SCHJOB.GBL?FOCUS=Applicant&languageCd=ENG#row-42",
+        }
+    }
+}
+
+# Workday tenant examples
+WORKDAY = {
+    "base_url": "https://tenant.wd3.myworkdayjobs.com",
+    "site_path": "External",
+    "api_url": "https://tenant.wd3.myworkdayjobs.com/wday/cxs/tenant/External/jobs",
+    "job_path": "/job/Paris/Example_JR1",
+}
+
+# Generic test URLs (safe for public repo)
+GENERIC_URLS = {
+    "example": "https://example.org",
+    "example_job": "https://example.com/job",
+}
