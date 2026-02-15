@@ -1,0 +1,7 @@
+defaults:
+  min_words: 50
+  max_words: 10000
+  max_fetch_seconds_per_job: 30.0
+
+org_overrides:
+  {}
