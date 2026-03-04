@@ -668,12 +668,61 @@ def collect_postings_org_via_runner(
             logger.info(f"[{org_abbrev}] scraper_error={exc}")
             return org_block
 
+        # Build cache of already-enriched URLs from DB
+        existing_by_url: dict[str, dict] = {}
+        try:
+            with get_session() as session:
+                for row in load_enriched_jobs(session, org_abbrev):
+                    url = row.get("url", "")
+                    if url and is_enriched(row):
+                        existing_by_url[url] = row
+        except Exception as exc:
+            logger.info(f"[{org_abbrev}] DB cache lookup failed, continuing: {exc}")
+
         selected = jobs[:max_jobs] if max_jobs and max_jobs > 0 else jobs
         consecutive_429 = 0
         breaker_open = False
         for idx, job in enumerate(selected, start=1):
             title = (job.get("title") or "").strip()
             url = (job.get("url") or "").strip()
+
+            if url in existing_by_url:
+                cached = existing_by_url[url]
+                org_block["jobs"].append(
+                    {
+                        "index": idx,
+                        "title": title,
+                        "url": url,
+                        "content_type": cached.get("content_type", ""),
+                        "enrich_status": cached.get("enrich_status", ""),
+                        "status_reason": "cached",
+                        "fetch_method": cached.get("fetch_method", ""),
+                        "description": cached.get("description", ""),
+                        "pdf_path": cached.get("pdf_path", ""),
+                        "fetch_seconds": 0.0,
+                        "error": "",
+                    }
+                )
+                logger.emit(
+                    "job_result",
+                    org_abbrev=org_abbrev,
+                    org_name=org_name,
+                    job_index=idx,
+                    job_title=title,
+                    job_url=url,
+                    duration_seconds=0.0,
+                    enrich_status=cached.get("enrich_status", "cached"),
+                    content_type=cached.get("content_type", ""),
+                    word_count=_word_count(cached.get("description", "")),
+                    status_reason="cached",
+                    error="",
+                )
+                logger.info(
+                    f"[{org_abbrev}] [{idx}/{len(selected)}] DONE status=cached "
+                    f"words={_word_count(cached.get('description', ''))} t=0.000s"
+                )
+                continue
+
             if breaker_open:
                 fetch_res = _rate_limited_skip_result()
                 logger.emit(

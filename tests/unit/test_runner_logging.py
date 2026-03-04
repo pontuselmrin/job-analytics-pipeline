@@ -271,6 +271,9 @@ def test_enrich_org_non_eib_does_not_use_scraper_detail(monkeypatch, tmp_path):
     )
     monkeypatch.setattr("enrichment.runner.load_output", lambda *args, **kwargs: None)
     monkeypatch.setattr(
+        "enrichment.runner.load_enriched_jobs", lambda *args, **kwargs: []
+    )
+    monkeypatch.setattr(
         "enrichment.runner.save_output",
         lambda *args, **kwargs: tmp_path / "TESTORG.json",
     )
