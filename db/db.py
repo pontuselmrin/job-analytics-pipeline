@@ -41,10 +41,9 @@ class Organization(Base):
 class Job(Base):
     __tablename__ = "jobs"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    url = Column(String, primary_key=True)
     org_abbrev = Column(String, nullable=False)
     title = Column(String, nullable=False)
-    url = Column(String, nullable=False)
     content_type = Column(String, nullable=False, server_default="")
     description = Column(Text, nullable=False, server_default="")
     pdf_path = Column(String, nullable=False, server_default="")
@@ -54,8 +53,6 @@ class Job(Base):
     status_reason = Column(String, nullable=False, server_default="")
     fetch_method = Column(String, nullable=False, server_default="")
     fetch_seconds = Column(Float, nullable=False, server_default="0.0")
-
-    __table_args__ = (UniqueConstraint("org_abbrev", "url"),)
 
 
 class BoilerplateSentence(Base):
@@ -102,9 +99,7 @@ def upsert_org(session: Session, org_abbrev: str, org_name: str) -> None:
 def upsert_jobs(session: Session, org_abbrev: str, jobs: list[dict]) -> None:
     """Bulk upsert jobs using (org_abbrev, url) as the unique key."""
     for job in jobs:
-        existing = (
-            session.query(Job).filter_by(org_abbrev=org_abbrev, url=job["url"]).first()
-        )
+        existing = session.get(Job, job["url"])
         if existing:
             for key in (
                 "title",

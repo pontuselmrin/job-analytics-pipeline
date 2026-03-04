@@ -5,10 +5,9 @@ CREATE TABLE organizations (
 );
 
 CREATE TABLE jobs (
-    id            SERIAL PRIMARY KEY,
+    url           TEXT PRIMARY KEY,
     org_abbrev    TEXT NOT NULL REFERENCES organizations(org_abbrev),
     title         TEXT NOT NULL,
-    url           TEXT NOT NULL,
     content_type  TEXT NOT NULL DEFAULT '',
     description   TEXT NOT NULL DEFAULT '',
     pdf_path      TEXT NOT NULL DEFAULT '',
@@ -17,8 +16,7 @@ CREATE TABLE jobs (
     enrich_status TEXT NOT NULL DEFAULT '',
     status_reason TEXT NOT NULL DEFAULT '',
     fetch_method  TEXT NOT NULL DEFAULT '',
-    fetch_seconds REAL NOT NULL DEFAULT 0.0,
-    UNIQUE (org_abbrev, url)
+    fetch_seconds REAL NOT NULL DEFAULT 0.0
 );
 
 CREATE TABLE IF NOT EXISTS boilerplate_sentences (
