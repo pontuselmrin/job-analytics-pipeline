@@ -1,0 +1,56 @@
+version: 2
+
+models:
+  - name: dim_organizations
+    columns:
+      - name: org_key
+        tests:
+          - not_null
+          - unique
+      - name: org_abbrev
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_content_types
+    columns:
+      - name: content_type_key
+        tests:
+          - not_null
+          - unique
+      - name: content_type
+        tests:
+          - not_null
+
+  - name: dim_enrich_statuses
+    columns:
+      - name: status_key
+        tests:
+          - not_null
+          - unique
+
+  - name: fact_job_enrichments
+    columns:
+      - name: job_key
+        tests:
+          - not_null
+          - unique
+      - name: org_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_organizations')
+                field: org_key
+      - name: content_type_key
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_content_types')
+                field: content_type_key
+      - name: status_key
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_enrich_statuses')
+                field: status_key
