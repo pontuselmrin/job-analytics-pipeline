@@ -1,0 +1,30 @@
+version: 2
+
+sources:
+  - name: raw
+    database: "{{ 'pg' if target.type == 'duckdb' else target.dbname }}"
+    schema: public
+    tables:
+      - name: organizations
+        columns:
+          - name: org_abbrev
+            tests:
+              - not_null
+              - unique
+          - name: org_name
+            tests:
+              - not_null
+
+      - name: jobs
+        columns:
+          - name: id
+            tests:
+              - not_null
+              - unique
+          - name: org_abbrev
+            tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('raw', 'organizations')
+                    field: org_abbrev

@@ -1,0 +1,25 @@
+scrape_dwh:
+  target: postgres
+
+  outputs:
+    postgres:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      port: 5432
+      user: "{{ env_var('POSTGRES_USER', 'scrape') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'scrape') }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'scrape') }}"
+      schema: public
+      threads: 4
+
+    duckdb:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', 'warehouse.duckdb') }}"
+      schema: main
+      threads: 4
+      extensions:
+        - postgres
+      attach:
+        - path: "dbname={{ env_var('POSTGRES_DB', 'scrape') }} user={{ env_var('POSTGRES_USER', 'scrape') }} password={{ env_var('POSTGRES_PASSWORD', 'scrape') }} host={{ env_var('POSTGRES_HOST', 'localhost') }} port=5432"
+          type: postgres
+          alias: pg
