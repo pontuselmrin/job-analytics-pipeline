@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_organizations
+    columns:
+      - name: org_abbrev
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_jobs
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - unique
+      - name: org_abbrev
+        tests:
+          - not_null
+      - name: title
+        tests:
+          - not_null
