@@ -144,7 +144,22 @@ def run_scraper_for_org(
     )
     started = time.perf_counter()
     mod = _load_scraper_module(scraper_path)
-    jobs = mod.scrape()
+
+    max_attempts = 3
+    for attempt in range(1, max_attempts + 1):
+        try:
+            jobs = mod.scrape()
+            break
+        except (ConnectionError, OSError) as exc:
+            if attempt == max_attempts:
+                raise
+            delay = 2 ** (attempt - 1)  # 1s, 2s
+            logger.info(
+                f"[{org_abbrev}] scraper connection error (attempt {attempt}/{max_attempts}), "
+                f"retrying in {delay}s: {exc}"
+            )
+            time.sleep(delay)
+
     elapsed = round(time.perf_counter() - started, 3)
     logger.emit(
         "scraper_done",
