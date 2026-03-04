@@ -120,6 +120,9 @@ def test_collect_postings_stops_org_after_consecutive_429(monkeypatch, tmp_path)
     monkeypatch.setattr(
         "enrichment.runner.run_scraper_for_org", lambda *args, **kwargs: jobs
     )
+    monkeypatch.setattr(
+        "enrichment.runner.load_enriched_jobs", lambda *args, **kwargs: []
+    )
 
     calls = {"n": 0}
 
@@ -172,6 +175,9 @@ def test_collect_postings_uses_eib_scraper_detail_without_fetch(monkeypatch, tmp
     monkeypatch.setattr(
         "enrichment.runner.run_scraper_for_org", lambda *args, **kwargs: jobs
     )
+    monkeypatch.setattr(
+        "enrichment.runner.load_enriched_jobs", lambda *args, **kwargs: []
+    )
 
     calls = {"n": 0}
 
@@ -221,6 +227,9 @@ def test_collect_postings_eib_short_scraper_detail_falls_back_to_fetch(
     ]
     monkeypatch.setattr(
         "enrichment.runner.run_scraper_for_org", lambda *args, **kwargs: jobs
+    )
+    monkeypatch.setattr(
+        "enrichment.runner.load_enriched_jobs", lambda *args, **kwargs: []
     )
 
     calls = {"n": 0}

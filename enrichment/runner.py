@@ -15,7 +15,15 @@ from pathlib import Path
 from typing import Callable
 import threading
 
-from db.db import get_session, load_enriched_jobs, upsert_org, upsert_jobs
+from db.db import (
+    get_session,
+    load_enriched_jobs,
+    upsert_org,
+    upsert_jobs,
+    get_failed_urls,
+    record_fetch_failure,
+    clear_fetch_failure,
+)
 from .config import PLAYWRIGHT_ORGS, REQUEST_DELAY, get_logs_path, get_profile_dir
 from .fetcher import classify_fetch_error, extract_html_description, fetch_job_content
 from .models import EnrichedJob, FetchResult, ScrapedJob
@@ -463,6 +471,16 @@ def enrich_org_via_runner(
             except Exception as exc:
                 logger.info(f"[{org_abbrev}] DB cache lookup failed, continuing: {exc}")
 
+        permanently_failed: set[str] = set()
+        if not force:
+            try:
+                with get_session() as session:
+                    permanently_failed = get_failed_urls(
+                        session, org_abbrev, max_failures=2
+                    )
+            except Exception as exc:
+                logger.info(f"[{org_abbrev}] failure lookup failed, continuing: {exc}")
+
         pw_detail = use_playwright_detail or (org_abbrev in PLAYWRIGHT_ORGS)
         enriched_jobs = []
         selected = raw_jobs[:max_jobs] if max_jobs and max_jobs > 0 else raw_jobs
@@ -490,6 +508,27 @@ def enrich_org_via_runner(
                 logger.info(
                     f"[{org_abbrev}] [{i}/{len(selected)}] DONE status=cached "
                     f"words={_word_count(cached_job.get('description', ''))} t=0.000s"
+                )
+                continue
+
+            if url in permanently_failed:
+                logger.emit(
+                    "job_result",
+                    org_abbrev=org_abbrev,
+                    org_name=org_name,
+                    job_index=i,
+                    job_title=raw_job.get("title", ""),
+                    job_url=url,
+                    duration_seconds=0.0,
+                    enrich_status="permanent_failure",
+                    content_type="error",
+                    word_count=0,
+                    status_reason="max_retries_exceeded",
+                    error="",
+                )
+                logger.info(
+                    f"[{org_abbrev}] [{i}/{len(selected)}] SKIP status=permanent_failure "
+                    "t=0.000s"
                 )
                 continue
 
@@ -590,6 +629,25 @@ def enrich_org_via_runner(
                     fetch_method=fetch_res.get("fetch_method", "http"),
                 )
             job["fetch_seconds"] = fetch_res.get("fetch_seconds", 0.0)
+
+            # Track failures / clear on success
+            try:
+                with get_session() as session:
+                    if fetch_res.get("error"):
+                        record_fetch_failure(
+                            session,
+                            url=url,
+                            org_abbrev=org_abbrev,
+                            title=(raw_job.get("title") or "").strip(),
+                            error=str(fetch_res.get("error", "")),
+                            status=fetch_res.get("enrich_status", "error"),
+                            reason=fetch_res.get("status_reason", ""),
+                        )
+                    else:
+                        clear_fetch_failure(session, url)
+            except Exception as exc:
+                logger.info(f"[{org_abbrev}] failure tracking DB write failed: {exc}")
+
             enriched_jobs.append(job)
 
             if i < len(selected):
