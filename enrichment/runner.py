@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Callable
 import threading
 
+from db.db import get_session, upsert_org, upsert_jobs
 from .config import PLAYWRIGHT_ORGS, REQUEST_DELAY, get_logs_path, get_profile_dir
 from .fetcher import classify_fetch_error, extract_html_description, fetch_job_content
 from .schema import (
@@ -549,6 +550,16 @@ def enrich_org_via_runner(
                 time.sleep(REQUEST_DELAY)
 
         output_path = save_output(org_name, org_abbrev, enriched_jobs)
+
+        try:
+            with get_session() as session:
+                upsert_org(session, org_abbrev, org_name)
+                upsert_jobs(session, org_abbrev, enriched_jobs)
+        except Exception as exc:
+            logger.warning(
+                f"[{org_abbrev}] DB write failed, continuing with JSON only: {exc}"
+            )
+
         logger.emit(
             "org_done",
             org_abbrev=org_abbrev,
@@ -704,6 +715,15 @@ def collect_postings_org_via_runner(
                     "fetch_seconds": fetch_res.get("fetch_seconds", 0.0),
                     "error": fetch_res.get("error", ""),
                 }
+            )
+
+        try:
+            with get_session() as session:
+                upsert_org(session, org_abbrev, org_name)
+                upsert_jobs(session, org_abbrev, org_block["jobs"])
+        except Exception as exc:
+            logger.warning(
+                f"[{org_abbrev}] DB write failed, continuing with JSON only: {exc}"
             )
 
         logger.emit(
