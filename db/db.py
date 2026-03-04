@@ -58,6 +58,17 @@ class Job(Base):
     __table_args__ = (UniqueConstraint("org_abbrev", "url"),)
 
 
+class BoilerplateSentence(Base):
+    __tablename__ = "boilerplate_sentences"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    org_abbrev = Column(String, nullable=False)
+    sentence = Column(Text, nullable=False)
+    frequency = Column(Float, nullable=False)
+
+    __table_args__ = (UniqueConstraint("org_abbrev", "sentence"),)
+
+
 @contextmanager
 def get_session():
     """Yield a SQLAlchemy session, committing on success or rolling back on error."""

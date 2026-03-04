@@ -15,6 +15,23 @@ sources:
             tests:
               - not_null
 
+      - name: boilerplate_sentences
+        columns:
+          - name: id
+            tests:
+              - not_null
+              - unique
+          - name: org_abbrev
+            tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('raw', 'organizations')
+                    field: org_abbrev
+          - name: sentence
+            tests:
+              - not_null
+
       - name: jobs
         columns:
           - name: id

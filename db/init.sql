@@ -20,3 +20,11 @@ CREATE TABLE jobs (
     fetch_seconds REAL NOT NULL DEFAULT 0.0,
     UNIQUE (org_abbrev, url)
 );
+
+CREATE TABLE IF NOT EXISTS boilerplate_sentences (
+    id         SERIAL PRIMARY KEY,
+    org_abbrev TEXT NOT NULL REFERENCES organizations(org_abbrev),
+    sentence   TEXT NOT NULL,
+    frequency  REAL NOT NULL,
+    UNIQUE (org_abbrev, sentence)
+);
