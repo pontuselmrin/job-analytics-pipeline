@@ -15,9 +15,10 @@ from pathlib import Path
 from typing import Callable
 import threading
 
-from db.db import get_session, upsert_org, upsert_jobs
+from db.db import get_session, load_enriched_jobs, upsert_org, upsert_jobs
 from .config import PLAYWRIGHT_ORGS, REQUEST_DELAY, get_logs_path, get_profile_dir
 from .fetcher import classify_fetch_error, extract_html_description, fetch_job_content
+from .models import EnrichedJob, FetchResult, ScrapedJob
 from .schema import (
     enrich_job,
     is_enriched,
@@ -39,6 +40,25 @@ def _utc_now() -> str:
 
 def _word_count(text: str) -> int:
     return len((text or "").split())
+
+
+def _validated_fetch_result(d: dict) -> dict:
+    """Validate a fetch result dict via FetchResult model."""
+    return FetchResult.model_validate(d).model_dump()
+
+
+def _validate_enriched_jobs(
+    jobs: list[dict], logger: EventLogger, org_abbrev: str
+) -> list[dict]:
+    """Validate enriched jobs before DB upsert, dropping invalid entries."""
+    valid = []
+    for job in jobs:
+        try:
+            EnrichedJob.model_validate(job)
+            valid.append(job)
+        except Exception as exc:
+            logger.info(f"[{org_abbrev}] dropping invalid enriched job: {exc}")
+    return valid
 
 
 @contextmanager
@@ -161,6 +181,15 @@ def run_scraper_for_org(
             )
             time.sleep(delay)
 
+    validated = []
+    for raw in jobs:
+        try:
+            ScrapedJob.model_validate(raw)
+            validated.append(raw)
+        except Exception as exc:
+            logger.info(f"[{org_abbrev}] dropping invalid scraped job: {exc}")
+    jobs = validated
+
     elapsed = round(time.perf_counter() - started, 3)
     logger.emit(
         "scraper_done",
@@ -219,16 +248,18 @@ def _fetch_one(
     logger.info(f"[{org_abbrev}] [{idx}/{total}] START title={title[:80]} url={url}")
 
     if not url:
-        result = {
-            "content_type": "error",
-            "description": "",
-            "pdf_path": "",
-            "enrich_status": "no_detail_url",
-            "status_reason": "missing_url",
-            "fetch_method": "none",
-            "fetch_seconds": 0.0,
-            "error": "",
-        }
+        result = _validated_fetch_result(
+            {
+                "content_type": "error",
+                "description": "",
+                "pdf_path": "",
+                "enrich_status": "no_detail_url",
+                "status_reason": "missing_url",
+                "fetch_method": "none",
+                "fetch_seconds": 0.0,
+                "error": "",
+            }
+        )
         logger.emit(
             "job_result",
             org_abbrev=org_abbrev,
@@ -284,7 +315,7 @@ def _fetch_one(
             f"status={out.get('enrich_status', '')} type={out.get('content_type', '')} "
             f"words={words} t={fetch_seconds:.3f}s"
         )
-        return out
+        return _validated_fetch_result(out)
     except Exception as exc:  # noqa: BLE001
         fetch_seconds = round(time.perf_counter() - started, 3)
         status, reason = classify_fetch_error(exc)
@@ -326,7 +357,7 @@ def _fetch_one(
                         f"[{org_abbrev}] [{idx}/{total}] DONE status=ok type=html "
                         f"words={words} t={fallback_seconds:.3f}s [playwright_fallback]"
                     )
-                    return out
+                    return _validated_fetch_result(out)
             except Exception:
                 pass
 
@@ -357,20 +388,22 @@ def _fetch_one(
         logger.info(
             f"[{org_abbrev}] [{idx}/{total}] ERROR status={status}:{reason} t={fetch_seconds:.3f}s err={exc}"
         )
-        return out
+        return _validated_fetch_result(out)
 
 
 def _rate_limited_skip_result() -> dict:
-    return {
-        "content_type": "error",
-        "description": "",
-        "pdf_path": "",
-        "enrich_status": "blocked_source",
-        "status_reason": "org_rate_limited_skip",
-        "fetch_method": "http",
-        "fetch_seconds": 0.0,
-        "error": "",
-    }
+    return _validated_fetch_result(
+        {
+            "content_type": "error",
+            "description": "",
+            "pdf_path": "",
+            "enrich_status": "blocked_source",
+            "status_reason": "org_rate_limited_skip",
+            "fetch_method": "http",
+            "fetch_seconds": 0.0,
+            "error": "",
+        }
+    )
 
 
 def _scraper_detail_result(raw_job: dict, org_abbrev: str) -> dict | None:
@@ -379,16 +412,18 @@ def _scraper_detail_result(raw_job: dict, org_abbrev: str) -> dict | None:
     description = (raw_job.get("description") or "").strip()
     if _word_count(description) < 50 or len(description) < 120:
         return None
-    return {
-        "content_type": "html",
-        "description": description,
-        "pdf_path": (raw_job.get("pdf_path") or "").strip(),
-        "enrich_status": "ok",
-        "status_reason": "scraper_detail",
-        "fetch_method": "scraper",
-        "fetch_seconds": 0.0,
-        "error": "",
-    }
+    return _validated_fetch_result(
+        {
+            "content_type": "html",
+            "description": description,
+            "pdf_path": (raw_job.get("pdf_path") or "").strip(),
+            "enrich_status": "ok",
+            "status_reason": "scraper_detail",
+            "fetch_method": "scraper",
+            "fetch_seconds": 0.0,
+            "error": "",
+        }
+    )
 
 
 def enrich_org_via_runner(
@@ -409,13 +444,24 @@ def enrich_org_via_runner(
 
     def _run():
         raw_jobs = run_scraper_for_org(scraper_path, org_abbrev, org_name, logger)
-        existing = load_output(org_abbrev)
         existing_by_url: dict[str, dict] = {}
-        if existing and not force:
-            for job in existing.get("jobs", []):
-                url = job.get("url", "")
-                if url and is_enriched(job):
-                    existing_by_url[url] = job
+        if not force:
+            # Load from JSON cache first
+            existing = load_output(org_abbrev)
+            if existing:
+                for job in existing.get("jobs", []):
+                    url = job.get("url", "")
+                    if url and is_enriched(job):
+                        existing_by_url[url] = job
+            # Also load from DB (fills gaps when JSON is missing/stale)
+            try:
+                with get_session() as session:
+                    for job in load_enriched_jobs(session, org_abbrev):
+                        url = job.get("url", "")
+                        if url and url not in existing_by_url and is_enriched(job):
+                            existing_by_url[url] = job
+            except Exception as exc:
+                logger.info(f"[{org_abbrev}] DB cache lookup failed, continuing: {exc}")
 
         pw_detail = use_playwright_detail or (org_abbrev in PLAYWRIGHT_ORGS)
         enriched_jobs = []
@@ -554,7 +600,11 @@ def enrich_org_via_runner(
         try:
             with get_session() as session:
                 upsert_org(session, org_abbrev, org_name)
-                upsert_jobs(session, org_abbrev, enriched_jobs)
+                upsert_jobs(
+                    session,
+                    org_abbrev,
+                    _validate_enriched_jobs(enriched_jobs, logger, org_abbrev),
+                )
         except Exception as exc:
             logger.warning(
                 f"[{org_abbrev}] DB write failed, continuing with JSON only: {exc}"
@@ -720,7 +770,11 @@ def collect_postings_org_via_runner(
         try:
             with get_session() as session:
                 upsert_org(session, org_abbrev, org_name)
-                upsert_jobs(session, org_abbrev, org_block["jobs"])
+                upsert_jobs(
+                    session,
+                    org_abbrev,
+                    _validate_enriched_jobs(org_block["jobs"], logger, org_abbrev),
+                )
         except Exception as exc:
             logger.warning(
                 f"[{org_abbrev}] DB write failed, continuing with JSON only: {exc}"
