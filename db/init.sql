@@ -26,3 +26,15 @@ CREATE TABLE IF NOT EXISTS boilerplate_sentences (
     frequency  REAL NOT NULL,
     UNIQUE (org_abbrev, sentence)
 );
+
+CREATE TABLE IF NOT EXISTS fetch_failures (
+    url           TEXT PRIMARY KEY,
+    org_abbrev    TEXT NOT NULL REFERENCES organizations(org_abbrev),
+    title         TEXT NOT NULL DEFAULT '',
+    fail_count    INTEGER NOT NULL DEFAULT 1,
+    last_error    TEXT NOT NULL DEFAULT '',
+    last_status   TEXT NOT NULL DEFAULT '',
+    last_reason   TEXT NOT NULL DEFAULT '',
+    first_failed  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_failed   TIMESTAMPTZ NOT NULL DEFAULT now()
+);

@@ -66,6 +66,20 @@ class BoilerplateSentence(Base):
     __table_args__ = (UniqueConstraint("org_abbrev", "sentence"),)
 
 
+class FetchFailure(Base):
+    __tablename__ = "fetch_failures"
+
+    url = Column(String, primary_key=True)
+    org_abbrev = Column(String, nullable=False)
+    title = Column(String, nullable=False, server_default="")
+    fail_count = Column(Integer, nullable=False, server_default="1")
+    last_error = Column(String, nullable=False, server_default="")
+    last_status = Column(String, nullable=False, server_default="")
+    last_reason = Column(String, nullable=False, server_default="")
+    first_failed = Column(DateTime(timezone=True))
+    last_failed = Column(DateTime(timezone=True))
+
+
 @contextmanager
 def get_session():
     """Yield a SQLAlchemy session, committing on success or rolling back on error."""
@@ -153,3 +167,57 @@ def load_enriched_jobs(session: Session, org_abbrev: str) -> list[dict]:
         }
         for r in rows
     ]
+
+
+def get_failed_urls(
+    session: Session, org_abbrev: str, max_failures: int = 2
+) -> set[str]:
+    """Return URLs that have failed >= max_failures times for an org."""
+    rows = (
+        session.query(FetchFailure.url)
+        .filter_by(org_abbrev=org_abbrev)
+        .filter(FetchFailure.fail_count >= max_failures)
+        .all()
+    )
+    return {r[0] for r in rows}
+
+
+def record_fetch_failure(
+    session: Session,
+    url: str,
+    org_abbrev: str,
+    title: str,
+    error: str,
+    status: str,
+    reason: str,
+) -> None:
+    """Insert or increment a fetch failure record."""
+    now = datetime.now(timezone.utc)
+    existing = session.get(FetchFailure, url)
+    if existing:
+        existing.fail_count += 1
+        existing.last_error = error
+        existing.last_status = status
+        existing.last_reason = reason
+        existing.last_failed = now
+    else:
+        session.add(
+            FetchFailure(
+                url=url,
+                org_abbrev=org_abbrev,
+                title=title,
+                fail_count=1,
+                last_error=error,
+                last_status=status,
+                last_reason=reason,
+                first_failed=now,
+                last_failed=now,
+            )
+        )
+
+
+def clear_fetch_failure(session: Session, url: str) -> None:
+    """Remove a failure record when a job succeeds."""
+    existing = session.get(FetchFailure, url)
+    if existing:
+        session.delete(existing)

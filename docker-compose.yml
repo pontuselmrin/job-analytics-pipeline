@@ -14,5 +14,18 @@ services:
       timeout: 3s
       retries: 5
 
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      DATABASE_URL: postgresql://scrape:scrape@db:5432/scrape
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   pgdata:
